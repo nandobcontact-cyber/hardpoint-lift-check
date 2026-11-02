@@ -1116,7 +1116,13 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
     <p class="lead" id="fleetLead"></p>
     <div class="fleet-grid">
       <div class="card">
-        <h3 id="fleetH">Kranen</h3>
+        <h3 id="fleetH">Kranen</h3><div style="margin:14px 0">
+<p class="note">Herken een kraan met een foto en bevestig het model voor je wagenpark.</p>
+<div class="actions"><button class="btn secondary" type="button" id="fleetCameraBtn">Foto maken</button><button class="btn secondary" type="button" id="fleetGalleryBtn">Foto uit galerij</button></div>
+<input id="fleetCamera" type="file" accept="image/*" capture="environment" hidden>
+<input id="fleetGallery" type="file" accept="image/*" hidden>
+<div id="fleetPhotoResult" role="status" aria-live="polite"></div>
+</div>
         <div class="scroll"><table class="fleet"><thead><tr><th>Nummer</th><th>Kraan</th><th>Status</th><th></th></tr></thead><tbody id="fleetRows"></tbody></table></div>
         <div class="add-row">
           <div class="fld"><label for="fCrane">Kraan uit de database</label><select id="fCrane"></select></div>
@@ -2303,14 +2309,14 @@ function applyOwnPhotoModel(k){
 }
 (function(){
   let busy=false,preview=null;
-  const out=$('addPhotoResult');
   $('addCameraBtn').onclick=()=>$('addCamera').click();
   $('addGalleryBtn').onclick=()=>$('addGallery').click();
-  async function readOwnPhoto(input){
+  async function readOwnPhoto(input,target="own"){
+    const out=$(target==="fleet"?"fleetPhotoResult":"addPhotoResult");
     const file=input.files[0];input.value='';if(!file||busy)return;
     if(!file.type.startsWith('image/')){out.textContent='Kies een foto.';return}
     if(file.size>20*1024*1024){out.textContent='Foto te groot. Kies een foto kleiner dan 20 MB.';return}
-    busy=true;['addCameraBtn','addGalleryBtn'].forEach(id=>$(id).disabled=true);
+    busy=true;['addCameraBtn','addGalleryBtn','fleetCameraBtn','fleetGalleryBtn'].forEach(id=>$(id).disabled=true);
     out.textContent='Kraan herkennen…';
     let worker=null;
     try{
@@ -2332,14 +2338,26 @@ function applyOwnPhotoModel(k){
       candidates.forEach(k=>{
         const b=document.createElement('button');b.type='button';b.className='btn secondary';
         b.textContent=k.merk+' '+k.type+' — gegevens overnemen';
-        b.onclick=()=>{applyOwnPhotoModel(k);out.textContent='Merk, type en kraanklasse overgenomen. Controleer het bouwjaar en de opstelling.'};
+        b.onclick=()=>{
+          if(target==='fleet'){
+            if(!session){out.textContent='Log eerst in om je wagenpark aan te vullen.';return}
+            const c=anyC().find(c=>c.catalog&&c.merk===k.merk&&c.type===k.type);
+            if(!c){out.textContent='Dit model staat niet in de wagenparklijst. Voeg het toe via Eigen kraan toevoegen.';return}
+            renderFleet();$('fCrane').value=c.id;$('fNum').focus();
+            out.textContent='Model geselecteerd: '+k.merk+' '+k.type+'. Vul eventueel je eigen nummer in en klik op Toevoegen.';
+          }else{applyOwnPhotoModel(k);out.textContent='Merk, type en kraanklasse overgenomen. Controleer het bouwjaar en de opstelling.'}
+        };
         out.appendChild(b);
       });
     }catch(e){out.textContent='Herkennen is niet gelukt. Probeer een andere foto of vul merk en type hieronder in.'}
-    finally{if(worker)await worker.terminate().catch(()=>{});busy=false;['addCameraBtn','addGalleryBtn'].forEach(id=>$(id).disabled=false)}
+    finally{if(worker)await worker.terminate().catch(()=>{});busy=false;['addCameraBtn','addGalleryBtn','fleetCameraBtn','fleetGalleryBtn'].forEach(id=>$(id).disabled=false)}
   }
   $('addCamera').onchange=()=>readOwnPhoto($('addCamera'));
   $('addGallery').onchange=()=>readOwnPhoto($('addGallery'));
+  $('fleetCameraBtn').onclick=()=>$('fleetCamera').click();
+  $('fleetGalleryBtn').onclick=()=>$('fleetGallery').click();
+  $('fleetCamera').onchange=()=>readOwnPhoto($('fleetCamera'),'fleet');
+  $('fleetGallery').onchange=()=>readOwnPhoto($('fleetGallery'),'fleet');
 })();
 
 /* ---------- kraan herkennen op foto ---------- */
