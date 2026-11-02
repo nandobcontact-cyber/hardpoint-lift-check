@@ -2142,14 +2142,66 @@ $('loginCancel').onclick=()=>$('loginDlg').close();
 $('fleetLoginBtn').onclick=()=>$('loginDlg').showModal();
 $('logLoginBtn').onclick=()=>$('loginDlg').showModal();
 
+/* ---------- AI-koppeling ----------
+   Binnen de Claude-app: claude.use('sample').
+   Op een eigen website (bijv. hardpointsafety.com op Vercel): de server-functie /api/ai, die met een eigen Anthropic API-sleutel werkt.
+   Geen van beide beschikbaar (bijv. GitHub Pages): de foto- en videofuncties blijven verborgen. */
+const AI_ENDPOINT=(()=>{try{return new URL('/api/ai',location.href).href}catch(e){return '/api/ai'}})();
+let aiP=null;
+async function toJpegB64(blob,max){
+  const url=URL.createObjectURL(blob);
+  try{
+    const im=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=url});
+    const k=Math.min(1,max/Math.max(im.naturalWidth||1,im.naturalHeight||1)),c=document.createElement('canvas');
+    c.width=Math.max(1,Math.round(im.naturalWidth*k));c.height=Math.max(1,Math.round(im.naturalHeight*k));
+    c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+    return c.toDataURL('image/jpeg',0.82).split(',')[1];
+  }finally{URL.revokeObjectURL(url)}
+}
+function serverSample(maxImages){
+  return {
+    limits:async()=>({images:{mediaTypes:['image/jpeg','image/png','image/webp','image/gif','image/heic','image/heif'],maxInputBytes:40e6,maxCount:maxImages}}),
+    json:async(prompt,{images=[],signal}={})=>{
+      const err=c=>{const e=new Error(c);e.code=c;return e};
+      let imgs;try{imgs=await Promise.all(images.slice(0,maxImages).map(async b=>({media_type:'image/jpeg',data:await toJpegB64(b,1280)})))}catch(e){throw err('image_rejected')}
+      let r;try{r=await fetch(AI_ENDPOINT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({prompt,images:imgs,lang:typeof LANG==='string'?LANG:'nl'}),signal})}
+      catch(e){if(e&&e.name==='AbortError')throw err('cancelled');throw err('network')}
+      const j=await r.json().catch(()=>null);
+      if(!r.ok)throw err(j&&j.code||(r.status===429?'rate_limited':'server_error'));
+      if(!j||!j.json)throw err('server_error');
+      return j.json;
+    }
+  };
+}
+function getAI(){
+  if(aiP)return aiP;
+  aiP=(async()=>{
+    if(window.claude&&claude.use){try{const s=await claude.use('sample');if(s){const lim=await s.limits().catch(()=>null);if(lim&&lim.images)return {s,lim,where:'claude'}}}catch(e){}}
+    if(/^https?:$/.test(location.protocol)&&!/(^|\.)github\.io$/.test(location.hostname)){
+      try{const r=await fetch(AI_ENDPOINT,{cache:'no-store'});if(r.ok){const j=await r.json();if(j&&j.ok){const n=Math.max(1,Math.min(6,j.maxImages||6));return {s:serverSample(n),lim:await serverSample(n).limits(),where:'server'}}}}catch(e){}
+    }
+    return null;
+  })();
+  return aiP;
+}
+/* foto's of video → lijst met beelden (video: een paar beelden eruit halen) */
+async function mediaToImages(files,n){
+  const out=[];
+  for(const f of files){
+    if(f.type&&f.type.startsWith('video/'))out.push(...await framesFromVideo(f,Math.max(1,n-out.length)));
+    else out.push(f);
+    if(out.length>=n)break;
+  }
+  return out.slice(0,n);
+}
+function aiOffNote(afterEl,txt){if(!afterEl||afterEl.parentElement.querySelector('.ai-off'))return;const p=document.createElement('p');p.className='note ai-off';p.textContent=tr(txt);afterEl.insertAdjacentElement('afterend',p)}
+
 /* ---------- kraan herkennen op foto ---------- */
 (async()=>{
-  if(!window.claude||!claude.use)return;
-  let sample=null;try{sample=await claude.use('sample')}catch(e){}
-  if(!sample)return;
-  const lim=await sample.limits().catch(()=>null);
-  if(!lim||!lim.images)return;
-  $('photoIn').accept=lim.images.mediaTypes.join(',');
+  const ai=await getAI();
+  if(!ai)return;
+  const sample=ai.s,lim=ai.lim,maxN=Math.max(1,Math.min(4,lim.images.maxCount||4));
+  $('photoIn').accept=lim.images.mediaTypes.join(',')+',video/*';
   $('photoBtn').classList.add('on');document.body.classList.add('ai');
   $('photoBtn').onclick=()=>$('photoIn').click();
   let ctl=null,url=null;
@@ -2157,21 +2209,25 @@ $('logLoginBtn').onclick=()=>$('loginDlg').showModal();
   $('photoIn').onchange=async()=>{
     const f=$('photoIn').files[0];$('photoIn').value='';
     if(!f)return;
-    if(f.size>lim.images.maxInputBytes){box.classList.add('on');box.innerHTML='<div></div><div><h4>Foto te groot</h4><p>Kies een kleinere foto.</p></div>';return}
+    const isVid=!!(f.type&&f.type.startsWith('video/'));
+    if(!isVid&&f.size>lim.images.maxInputBytes){box.classList.add('on');box.innerHTML='<div></div><div><h4>Foto te groot</h4><p>Kies een kleinere foto.</p></div>';return}
     ctl?.abort();ctl=new AbortController();
-    if(url)URL.revokeObjectURL(url);url=URL.createObjectURL(f);
+    let imgs;
+    if(isVid){box.classList.add('on');box.innerHTML='<div></div><div><h4>Beelden uit de video halen…</h4></div>';try{imgs=await mediaToImages([f],maxN)}catch(e){box.innerHTML='<div></div><div><h4>Video niet te lezen</h4><p>Probeer een ander filmpje (bijvoorbeeld MP4) of maak een foto.</p></div>';return}if(!imgs.length){box.classList.remove('on');return}}
+    else imgs=[f];
+    if(url)URL.revokeObjectURL(url);url=URL.createObjectURL(imgs[0]);
     box.classList.add('on');
     box.innerHTML=`<img src="${url}" alt="Jouw foto"><div><h4>Kraan herkennen…</h4><p>Dit duurt meestal een halve minuut.</p></div><div class="pr-act"><button class="btn sm secondary" type="button" id="prStop">Stoppen</button></div>`;
     $('prStop').onclick=()=>ctl.abort();
     const db=anyC().map(c=>({id:c.id,naam:label(c),klasse_t:klasse(c)}));
-    const prompt=`Je helpt een kraanmachinist. Op de foto staat (waarschijnlijk) een mobiele kraan of een andere hijskraan.
+    const prompt=`Je helpt een kraanmachinist. ${imgs.length>1?`Je krijgt ${imgs.length} beelden uit een video van dezelfde kraan, in volgorde. `:''}Op de foto staat (waarschijnlijk) een mobiele kraan of een andere hijskraan.
 Bepaal zo goed mogelijk het merk, het type en de hijsklasse in ton. Let op belettering op de giek, de cabine en het chassis, het aantal assen, de vorm van de cabine en de giek, en de kleur.
 Kies daarna uit deze database de kraan die het beste past (dezelfde kraan, of anders die met de dichtstbijzijnde hijsklasse). Geef null als niets in de buurt komt of als er geen kraan op de foto staat.
 Database: ${JSON.stringify(db)}
 Antwoord alleen met één JSON-object, ${LANG!=='nl'?'met alle tekstvelden in het '+LNAME()+' (keep the JSON keys and the zekerheid/gewicht_bron values in Dutch exactly as shown)':'in het Nederlands'}:
 {"is_kraan": true, "merk": "Liebherr", "type": "LTM 1300-6.2", "klasse_t": 300, "assen": 6, "zekerheid": "hoog" | "middel" | "laag", "kenmerken": "korte zin over wat je ziet en waarop je het baseert", "match_id": "cat:l1300-63" of null}`;
     try{
-      const r=await sample.json(prompt,{images:[f],signal:ctl.signal});
+      const r=await sample.json(prompt,{images:imgs,signal:ctl.signal});
       if(!r||r.is_kraan===false){box.innerHTML=`<img src="${url}" alt="Jouw foto"><div><h4>Geen kraan gevonden</h4><p>Maak een foto waarop de hele kraan te zien is, het liefst van opzij.</p></div><div class="pr-act"><button class="btn sm secondary" type="button" id="prClose">Sluiten</button></div>`;$('prClose').onclick=()=>box.classList.remove('on');return}
       const z=['hoog','middel','laag'].includes(r.zekerheid)?r.zekerheid:'laag';
       const naam=[r.merk,r.type].filter(Boolean).map(String).join(' ')||'Onbekend type';
@@ -2193,22 +2249,24 @@ Antwoord alleen met één JSON-object, ${LANG!=='nl'?'met alle tekstvelden in he
 
 /* ---------- last inspecteren op foto ---------- */
 (async()=>{
-  if(!window.claude||!claude.use)return;
-  let sample=null;try{sample=await claude.use('sample')}catch(e){}
-  if(!sample)return;
-  const lim=await sample.limits().catch(()=>null);
-  if(!lim||!lim.images)return;
+  const ai=await getAI();
+  if(!ai){aiOffNote($('photoBtn'),'Foto- en videoherkenning is op deze plek nog niet actief.');return}
+  const sample=ai.s,lim=ai.lim,maxN=Math.max(1,Math.min(4,lim.images.maxCount||4));
   $('inspect').classList.add('on');
-  $('iPhoto').accept=lim.images.mediaTypes.join(',');
+  $('iPhoto').accept=lim.images.mediaTypes.join(',')+',video/*';
   $('iBtn').onclick=()=>$('iPhoto').click();
   let ctl=null,url=null,lastAdv=null;
   const out=$('iOut');
   const PRESET_NAMES=PRESETS.map((p,i)=>({index:i,naam:p[0],gewicht_kg:p[1]}));
   $('iPhoto').onchange=async()=>{
     const f=$('iPhoto').files[0];$('iPhoto').value='';if(!f)return;
-    if(f.size>lim.images.maxInputBytes){out.innerHTML='<p class="note" style="margin-top:10px">Deze foto is te groot. Kies een kleinere foto.</p>';return}
+    const isVid=!!(f.type&&f.type.startsWith('video/'));
+    if(!isVid&&f.size>lim.images.maxInputBytes){out.innerHTML='<p class="note" style="margin-top:10px">Deze foto is te groot. Kies een kleinere foto.</p>';return}
     ctl?.abort();ctl=new AbortController();
-    if(url)URL.revokeObjectURL(url);url=URL.createObjectURL(f);
+    let imgs;
+    if(isVid){out.innerHTML='<p class="note" style="margin-top:10px">Beelden uit de video halen…</p>';try{imgs=await mediaToImages([f],maxN)}catch(e){out.innerHTML='<p class="note" style="margin-top:10px">Deze video kan de browser niet lezen. Probeer een ander filmpje (bijvoorbeeld MP4) of maak een foto.</p>';return}if(!imgs.length){out.innerHTML='';return}}
+    else imgs=[f];
+    if(url)URL.revokeObjectURL(url);url=URL.createObjectURL(imgs[0]);
     out.innerHTML=`<div class="adv"><img src="${url}" alt="Jouw foto van de last"><div><h4>Last bekijken…</h4><p class="note">Dit duurt meestal een halve minuut tot een minuut.</p><button class="btn sm secondary" type="button" id="iStop" style="margin-top:8px">Stoppen</button></div></div>`;
     $('iStop').onclick=()=>ctl.abort();
     const net=num($('rNet').value),w=num($('weight').value),r=num($('radius').value),c=crane();
@@ -2218,7 +2276,7 @@ Antwoord alleen met één JSON-object, ${LANG!=='nl'?'met alle tekstvelden in he
       c?`Kraan: ${label(c)}, vlucht ${r||'?'} m.`:''
     ].join('\n');
     const prompt=`Je bent een ervaren rigger/aanslagman en geeft ADVIES (geen goedkeuring) over het aanslaan van een last met een mobiele kraan.
-Bekijk de foto van de last. Beoordeel: wat het is, of er hijspunten (hijsogen, hijsankers, oren) zichtbaar zijn, waar het zwaartepunt waarschijnlijk ligt, scherpe randen, kwetsbare delen, en of er een gewicht of CE-/typeplaatje te lezen is.
+Bekijk ${imgs.length>1?`de ${imgs.length} beelden (uit een video, in volgorde) van de last`:'de foto van de last'}. Beoordeel: wat het is, of er hijspunten (hijsogen, hijsankers, oren) zichtbaar zijn, waar het zwaartepunt waarschijnlijk ligt, scherpe randen, kwetsbare delen, en of er een gewicht of CE-/typeplaatje te lezen is.
 Geef daarna een advies voor de aanslagmethode en de hijsmiddelen, met een werklast (WLL) die past bij het gewicht en de sprenghoek (maximaal 60 graden tussen de sprongen; reken bij 2 of 4 sprongen met de belasting per sprong). Is het gewicht onbekend, schat het dan voorzichtig en zeg dat duidelijk.
 ${ctx}
 Kies hijsmiddelen bij voorkeur uit deze lijst (gebruik dan preset_index), of beschrijf een ander hijsmiddel met een geschat eigen gewicht:
@@ -2226,7 +2284,7 @@ ${JSON.stringify(PRESET_NAMES)}
 Antwoord alleen met één JSON-object, kort en praktisch, ${LANG!=='nl'?'met alle tekstvelden in het '+LNAME()+' (keep the JSON keys and the zekerheid/gewicht_bron values in Dutch exactly as shown)':'in het Nederlands'}:
 {"is_last":true,"wat":"korte omschrijving","gewicht_t":12.5,"gewicht_bron":"opgegeven"|"plaatje"|"geschat"|"onbekend","hijspunten":"wat je ziet","zwaartepunt":"korte opmerking","methode":"bijv. 4-sprong kettingset aan de vier hijsogen","sprenghoek":"bijv. max 60 graden, sprongen minimaal 4 m","hijsmiddelen":[{"naam":"Kettingset 4-sprong 20 t","aantal":1,"wll_t":20,"preset_index":8,"gewicht_kg":160,"waarom":"korte reden"}],"aandachtspunten":["kantbescherming bij scherpe randen", "..."],"scherpe_randen":true|false,"kwetsbaar_oppervlak":true|false,"hijsogen":true|false,"aantal_hijspunten":4,"zekerheid":"hoog"|"middel"|"laag"}`;
     try{
-      const a=await sample.json(prompt,{images:[f],signal:ctl.signal});
+      const a=await sample.json(prompt,{images:imgs,signal:ctl.signal});
       if(!a||a.is_last===false){out.innerHTML=`<div class="adv"><img src="${url}" alt="Jouw foto"><div><h4>Geen last herkend</h4><p class="note">Maak een foto waarop de hele last te zien is, inclusief de hijspunten.</p></div></div>`;return}
       lastAdv=a;
       if(typeof a.scherpe_randen==='boolean')$('vSharp').checked=a.scherpe_randen;
@@ -3098,9 +3156,9 @@ function vaContext(kind){
     <p class="note">${k==='wal'?'Film de kade waar de walkraan moet komen. We halen een paar beelden uit het filmpje en laten beoordelen of de kraan daar kan staan en of de vlucht klopt.':'Film de kade rond de los- of laadplek. We halen een paar beelden uit het filmpje en laten beoordelen of de boordkraan de plek kan halen en of die vrij is.'}</p>
     <div class="va-row"><label class="btn sm va-pick">Video of foto’s kiezen<input type="file" accept="video/*,image/*" multiple hidden data-vain></label><span class="note" data-vainfo></span></div>
     <div class="va-thumbs" data-vathumbs></div><div class="va-out" data-vaout aria-live="polite"></div>`});
-  let sample=null,lim=null;
-  if(window.claude&&claude.use){try{sample=await claude.use('sample')}catch(e){}if(sample)lim=await sample.limits().catch(()=>null)}
-  if(!sample||!lim||!lim.images){hosts.forEach(h=>{h.querySelector('.va-row').innerHTML=`<p class="note">${'De video-analyse werkt in de Claude-app.'}</p>`});return}
+  const ai=await getAI();
+  let sample=ai&&ai.s,lim=ai&&ai.lim;
+  if(!sample||!lim||!lim.images){hosts.forEach(h=>{h.querySelector('.va-row').innerHTML=`<p class="note">${tr('De video-analyse is op deze plek nog niet actief.')}</p>`});return}
   const maxN=Math.max(1,Math.min(6,lim.images.maxCount||4));
   hosts.forEach(h=>{
     const kind=h.dataset.va,inp=h.querySelector('[data-vain]'),th=h.querySelector('[data-vathumbs]'),out=h.querySelector('[data-vaout]'),info=h.querySelector('[data-vainfo]');
@@ -3159,10 +3217,10 @@ Antwoord alleen met één JSON-object, ${en?'met alle tekstvelden in het '+LNAME
 
 /* ---------- hijsmiddelen-advies + webshop ---------- */
 /* Zet hier het adres van de Hardpoint Safety-webshop, bijvoorbeeld 'https://www.jouwwebshop.nl/zoeken'. Leeg = nog niet gekoppeld. */
-const SHOP_URL='https://claude.ai/artifact/XZjS68DmwPyXKu3o3MmrTz';   // website Hardpoint Safety, sectie hijsmiddelen
+const SHOP_URL=/^https?:$/.test(location.protocol)&&!/claude\.(ai|site)|claudeusercontent/.test(location.hostname)?new URL('../website/index.html',location.href).href:'https://nandobcontact-cyber.github.io/hardpoint-lift-check/website/index.html';   // website Hardpoint Safety, sectie hijsmiddelen
 const tS=v=>String(Math.round(v*100)/100);
 /* slug = filter op de site: soort-werklast-lengte, bijv. rondstrop-5t-4m */
-const shopHref=slug=>`${SHOP_URL}#${LANG==='nl'?'hijsmiddelen':'en-lifting'}${slug?'-'+slug:''}`;
+const shopHref=slug=>`${SHOP_URL}#${LANG==='nl'?'hijsmiddelen':(['en','de','fr','es','tr','ar'].includes(LANG)?LANG:'en')+'-lifting'}${slug?'-'+slug:''}`;
 function slugFromText(t,wll){t=String(t||'').toLowerCase();const k=/rondstrop|round sling/.test(t)?'rondstrop':/band|webbing/.test(t)?'band':/ketting|chain/.test(t)?'ketting':/haak|hook/.test(t)?'haak':'';return k?k+(wll>0?`-${tS(wll)}t`:''):''}
 function shopBtn(slug,label){return `<a class="shop-btn" href="${shopHref(slug)}" target="_blank" rel="noopener">${label||'Bestel'}</a>`}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-noshop]');if(!b)return;let el=b.parentElement;while(el&&!el.querySelector('.shop-note'))el=el.parentElement;const n=el&&el.querySelector('.shop-note');if(n)n.hidden=false});
