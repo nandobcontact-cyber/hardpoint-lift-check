@@ -42,11 +42,15 @@ positions.forEach(x=>{
 const angleTarget=hitch==='recht'?[positions[0],.61,0]:[positions[0],.53,-.7];
 const dx=angleTarget[0]-master[0],dz=angleTarget[2]-master[2],dy=master[1]-angleTarget[1];
 const visualAngle=Math.atan2(Math.hypot(dx,dz),dy)*180/Math.PI;
-ctx.font='600 17px sans-serif';ctx.fillStyle='#314b5d';ctx.fillText('Schematische spronghoek: '+visualAngle.toFixed(0)+'°',24,38);
+const selected=document.getElementById('hkA');
+const angleLabel=selected&&selected.selectedOptions.length?selected.selectedOptions[0].textContent:'';
+ctx.font='600 17px sans-serif';ctx.fillStyle='#314b5d';
+ctx.fillText('Ingestelde hoekcategorie: '+angleLabel,24,38);
+ctx.font='14px sans-serif';ctx.fillText('3D-geometrie illustratief; geen maatvaste hoek',24,61);
 ctx.fillStyle='#263c50';ctx.font='600 20px sans-serif';ctx.fillText('LAST',w/2-27,h*.85);
 }
 orbit.addEventListener('input',render);tilt.addEventListener('input',render);wrap.querySelector('#hk3dReset').addEventListener('click',()=>{orbit.value=30;tilt.value=28;render();});
-document.getElementById('hkHitch')?.addEventListener('click',()=>setTimeout(render,0));document.getElementById('hkN')?.addEventListener('click',()=>setTimeout(render,0));
+document.getElementById('hkHitch')?.addEventListener('click',()=>setTimeout(render,0));document.getElementById('hkN')?.addEventListener('click',()=>setTimeout(render,0));document.getElementById('hkA')?.addEventListener('change',render);
 let start=null;canvas.addEventListener('pointerdown',e=>{start=[e.clientX,+orbit.value];canvas.setPointerCapture(e.pointerId)});canvas.addEventListener('pointermove',e=>{if(!start)return;orbit.value=Math.max(-180,Math.min(180,start[1]+(e.clientX-start[0])*.8));render()});canvas.addEventListener('pointerup',()=>start=null);canvas.addEventListener('pointercancel',()=>start=null);render();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
