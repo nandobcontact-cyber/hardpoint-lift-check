@@ -1238,7 +1238,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 <dialog id="loginDlg" aria-labelledby="loginH">
   <h2 id="loginH">Inloggen</h2>
   <p class="note">Dit is een demo. Kies een account om te zien hoe Hardpoint Lift Check werkt voor een bedrijf of voor een freelancer.</p>
-  <button class="choice" type="button" data-acct="bedrijf"><b>Demo Kraanverhuur BV</b>Bedrijfsabonnement, 10 accounts, gedeeld wagenpark</button>
+  <button class="choice" type="button" data-acct="bedrijf"><b>Hardpoint Safety</b>Bedrijfsabonnement, 10 accounts, gedeeld wagenpark</button>
   <button class="choice" type="button" data-acct="freelancer"><b>Jan de Vries</b>Freelancer, 1 account, eigen kranenlijst</button>
   <div class="actions"><button class="btn secondary" type="button" id="loginCancel">Annuleren</button></div>
 </dialog>
@@ -2124,7 +2124,7 @@ function finder(){
 
 /* ---------- inloggen en wagenpark ---------- */
 let session=null,fleet=[],team=[];
-const ACCTS={bedrijf:{name:'Demo Kraanverhuur BV',user:'Sanne Peters',seats:10},freelancer:{name:'Jan de Vries',user:'Jan de Vries',seats:1}};
+const ACCTS={bedrijf:{name:'Hardpoint Safety',user:'Hardpoint Safety',seats:10},freelancer:{name:'Jan de Vries',user:'Jan de Vries',seats:1}};
 try{session=localStorage.getItem('vluchtcheck-sessie')||null}catch(e){}
 /* inloggen staat voorlopig uit: zet FLEET_LOCK op true om het weer aan te zetten */
 const FLEET_LOCK=false;
