@@ -624,6 +624,13 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .cat-src{margin:6px 0 10px}
 .warn-y{color:var(--stop);font-weight:700}
 .pre-h{margin:22px 0 4px;font:700 20px "Barlow Condensed",sans-serif}
+.hits{grid-column:1/-1;background:var(--field);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.hits-h{margin:0 0 8px;font-weight:700;color:var(--ink)}
+.hits-g{margin-top:8px}.hits-g>b{display:block;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.hits-row{display:flex;flex-wrap:wrap;gap:8px}
+.hit{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 12px;text-align:left;cursor:pointer;color:var(--ink);min-width:0}
+.hit span{display:block;font:700 17px "Barlow Condensed",sans-serif}.hit small{color:var(--muted);font-size:12px}
+.hit:hover{border-color:var(--signal)}.hit.on{border-color:var(--signal);box-shadow:inset 0 0 0 1px var(--signal)}
 </style>
 </head>
 <body>
@@ -694,6 +701,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
         <button class="photo-btn" type="button" id="photoBtn"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Maak een foto van de kraan</button>
       </div>
       <div><label for="crane">Kraan</label><select id="crane"></select></div>
+      <div class="hits" id="hits" hidden></div>
       <div class="mode" role="group" aria-label="Wat wil je weten?">
         <button type="button" id="mLoad" aria-pressed="true">Hoeveel ton?</button>
         <button type="button" id="mReach" aria-pressed="false">Hoe ver?</button>
@@ -1431,6 +1439,9 @@ const XT_SRC={
 'load # t, too heavy':['Last # t, zu schwer','charge # t, trop lourde','carga # t, demasiado pesada'],
 'load # t, OK':['Last # t, in Ordnung','charge # t, conforme','carga # t, correcto'],
 'Language':['Sprache','Langue','Idioma'],
+"Cranes around # t":["Krane um # t", "Grues autour de # t", "Grúas de unas # t"],
+"No cranes around # t found.":["Keine Krane um # t gefunden.", "Aucune grue autour de # t trouvée.", "No se encontraron grúas de unas # t."],
+"load chart":["Traglasttabelle", "abaque de charge", "tabla de cargas"],
 "Max. load":["Max. Last", "Charge max.", "Carga máx."],
 "Telescopic boom":["Teleskopausleger", "Flèche télescopique", "Pluma telescópica"],
 "Lattice jib":["Gitterspitze", "Fléchette treillis", "Plumín de celosía"],
@@ -1514,7 +1525,8 @@ const LIEBHERR=[
  {id:'l1100-53',type:'LTM 1100-5.3',klasse:100,last:100,lr:3,assen:5,mast:[13,62],jib:[2,16],h:76,v:64,bal:22.5,kw:400,dr:'10x6x10 (optie 10x8x10)',j:[2022,null],jz:true,b:'L'},
  {id:'l1110-51',type:'LTM 1110-5.1',klasse:110,last:110,assen:5,mast:[null,60],jib:[10.8,19],j:[2013,2019],jz:false,b:'D'},
  {id:'l1110-52',type:'LTM 1110-5.2',klasse:110,last:110,lr:3,assen:5,mast:[11.5,60],jib:[2.9,33],h:91,v:66,bal:29,kw:400,dr:'10x6x10 (optie 10x8x10)',j:[2019,null],jz:true,b:'L'},
- {id:'l1120-41',type:'LTM 1120-4.1',klasse:120,last:120,lr:3,assen:4,mast:[12.3,66],jib:[2.9,26],h:91,v:64,bal:31,kw:330,dr:'8x6x8',j:[2020,null],jz:true,b:'L'},
+ {id:'l1120-41',type:'LTM 1120-4.1',klasse:120,last:120,lr:3,assen:4,mast:[12.3,66],jib:[2.9,26],h:91,v:64,bal:31,kw:330,dr:'8x6x8',j:[2020,2025],jz:true,b:'L'},
+ {id:'l1120-42',type:'LTM 1120-4.2',klasse:120,last:120,lr:3,assen:4,mast:[12.3,66],jib:[2.9,26],h:91,v:64,bal:31,kw:330,dr:'8x6x8',j:[2025,null],jz:true,b:'L'},
  {id:'l1130-51',type:'LTM 1130-5.1',klasse:130,last:130,assen:5,mast:[null,60],jib:[10.7,33],h:91,v:72,bal:42,j:[2007,null],jz:true,b:'D'},
  {id:'l1150-53',type:'LTM 1150-5.3',klasse:150,last:150,lr:3,assen:5,mast:[12.3,66],jib:[2.9,26],h:92,v:72,bal:45,kw:400,dr:'10x6x10 (optie 10x8x10)',j:[2018,null],jz:false,b:'L'},
  {id:'l1160-51',type:'LTM 1160-5.1',klasse:160,last:160,assen:5,mast:[null,62],jib:[null,43],bal:46.5,j:[null,2014],jz:false,b:'D'},
@@ -1548,27 +1560,39 @@ const label=c=>c.catalog?`${c.merk} ${c.type}`:c.custom?`${c.merk} ${c.type} (${
 let mode='load';
 
 /* ---------- keuzes ---------- */
+const tonQ=q=>{const m=String(q).trim().match(/^(\d+(?:[.,]\d+)?)\s*(?:t|ton|tons|tonnes?)?$/i);return m?num(m[1]):null};
+const nearTon=(kl,t)=>kl!=null&&t!=null&&Math.abs(kl-t)<=Math.max(5,t*0.15);
+function renderHits(){
+  const el=$('hits'),t=tonQ($('search').value);
+  if(t==null||t<=0){el.hidden=true;el.innerHTML='';return}
+  const list=anyC().filter(c=>nearTon(klasse(c),t)).sort((a,b)=>Math.abs(klasse(a)-t)-Math.abs(klasse(b)-t)||((b.catalog&&b.catalog.j&&b.catalog.j[0])||b.jaar||0)-((a.catalog&&a.catalog.j&&a.catalog.j[0])||a.jaar||0));
+  const by={};list.forEach(c=>{(by[c.merk]=by[c.merk]||[]).push(c)});
+  el.hidden=false;
+  el.innerHTML=list.length?`<p class="hits-h">${T2(`Kranen rond ${nf1.format(t)} t`,`Cranes around ${nf1.format(t)} t`)}</p>${Object.entries(by).map(([m,cs])=>`<div class="hits-g"><b>${esc(m)}</b><div class="hits-row">${cs.map(c=>`<button type="button" class="hit${$('crane').value===c.id?' on':''}" data-hit="${esc(c.id)}"><span>${esc(c.catalog?c.type:c.type+' ('+c.jaar+')'+cfgSuffix(c))}</span><small>${nf1.format(klasse(c))} t${c.catalog&&c.catalog.j&&(c.catalog.j[0]||c.catalog.j[1])?' · '+(c.catalog.j[0]||'…')+'–'+(c.catalog.j[1]||T2('heden','present')):''}${c.custom?' · '+T2('lasttabel','load chart'):''}</small></button>`).join('')}</div></div>`).join('')}`:`<p class="hits-h">${T2(`Geen kranen rond ${nf1.format(t)} t gevonden.`,`No cranes around ${nf1.format(t)} t found.`)}</p>`;
+  el.querySelectorAll('[data-hit]').forEach(b=>b.onclick=()=>{$('crane').value=b.dataset.hit;setHookDefault();fillConfig();renderHits()});
+}
 function fillCranes(keep){
-  const q=$('search').value.trim().toLowerCase(),sel=$('crane');sel.innerHTML='';let first=null;
-  const fl=session?fleet.map(f=>({f,c:findC(f.craneId)})).filter(x=>x.c&&(!q||(x.f.num+' '+label(x.c)).toLowerCase().includes(q))):[];
+  const q=$('search').value.trim().toLowerCase(),sel=$('crane');sel.innerHTML='';let first=null;const tq=tonQ(q);
+  const hitC=c=>!q||label(c).toLowerCase().includes(q)||(tq!=null&&nearTon(klasse(c),tq));
+  const fl=session?fleet.map(f=>({f,c:findC(f.craneId)})).filter(x=>x.c&&(!q||(x.f.num+' '+label(x.c)).toLowerCase().includes(q)||hitC(x.c))):[];
   if(fl.length){
     const og=document.createElement('optgroup');og.label=session==='bedrijf'?'Ons wagenpark':'Mijn favorieten';
     fl.forEach(({f,c})=>{const o=document.createElement('option');o.value=c.id;o.textContent=`${f.num} · ${label(c)}`;og.appendChild(o);if(!first)first=c.id});
     sel.appendChild(og);
   }
   [['Zelf ingevoerd',mine]].forEach(([g,list])=>{
-    const items=list.filter(c=>!q||label(c).toLowerCase().includes(q));if(!items.length)return;
+    const items=list.filter(hitC);if(!items.length)return;
     const og=document.createElement('optgroup');og.label=g;
     items.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=label(c);og.appendChild(o);if(!first)first=c.id});
     sel.appendChild(og);
   });
-  {const items=CATALOG.filter(k=>!q||(catLabel(k)+' '+k.klasse+' t').toLowerCase().includes(q));
+  {const items=CATALOG.filter(k=>!q||(catLabel(k)+' '+k.klasse+' t').toLowerCase().includes(q)||(tq!=null&&nearTon(k.klasse,tq))).sort((a,b)=>tq!=null?Math.abs(a.klasse-tq)-Math.abs(b.klasse-tq):0);
    if(items.length){const og=document.createElement('optgroup');og.label='Kranendatabase · lasttabel toevoegen';
      items.forEach(k=>{const n=variantsOf(k).length,o=document.createElement('option');o.value='cat:'+k.id;o.textContent=`${catLabel(k)}${k.j&&(k.j[0]||k.j[1])?` (${k.j[0]||'…'}–${k.j[1]||'…'})`:''} · ${k.klasse} t${n?` · ander bouwjaar toevoegen`:''}`;og.appendChild(o);if(!first)first=o.value});
      sel.appendChild(og)}}
   if(!first){const o=document.createElement('option');o.textContent='Geen kraan gevonden';o.value='';sel.appendChild(o)}
   if(keep&&[...sel.options].some(o=>o.value===keep))sel.value=keep;
-  fillConfig();
+  fillConfig();renderHits();
 }
 const crane=()=>findC($('crane').value);
 function fillConfig(){
@@ -1883,7 +1907,7 @@ function setMode(m){mode=m;$('mLoad').setAttribute('aria-pressed',m==='load');$(
   if(m==='reach'&&!num($('weight').value))$('weight').value=20;
   update()}
 $('mLoad').onclick=()=>setMode('load');$('mReach').onclick=()=>setMode('reach');
-$('search').oninput=()=>fillCranes($('crane').value);
+$('search').oninput=()=>fillCranes($('crane').value);$('crane').addEventListener('change',renderHits);
 $('crane').onchange=()=>{setHookDefault();fillConfig()};
 $('ballast').onchange=()=>fillBooms($('boom').value);
 $('boom').onchange=update;

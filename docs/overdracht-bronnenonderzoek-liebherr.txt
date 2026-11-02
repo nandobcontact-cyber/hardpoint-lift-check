@@ -1,0 +1,239 @@
+PROJECT: HARDPOINT LIFT CHECK
+OVERDRACHT BRONONDERZOEK LIEBHERR
+Datum: 2 november 2026
+
+DOEL
+Ik bouw Hardpoint Lift Check met Claude. Ik wil kraangegevens en lasttabellen verzamelen voor alle Liebherr LTM-mobiele telescoopkranen van 60 tot en met 400 metrische ton, inclusief oudere modellen en uitvoeringen. Bouwjaren moeten afzonderlijk worden vastgelegd wanneer daarvoor bewijs beschikbaar is.
+
+STATUS
+Dit pakket bevat een modelleninventaris, bronlinks en verwerkingsinstructies. De PDF-bestanden zelf zijn niet inbegrepen. De volledige lasttabellen zijn nog niet uitgelezen of gevalideerd. Volledigheid voor alle modellen, bouwjaren en configuraties is niet bevestigd.
+
+1. BRONNEN
+
+Onafhankelijk archief met Liebherr-documenten:
+https://falk-mail.dk/
+
+LTM onder 100 ton:
+https://falk-mail.dk/ltm1.html
+
+LTM 100–300 ton:
+https://falk-mail.dk/ltm2.html
+
+Zwaardere LTM-modellen:
+https://falk-mail.dk/ltm3.html
+
+Historisch modelschema, te gebruiken als zoekhulp:
+https://falk-mail.dk/modelflow.html
+
+Officiële Liebherr LTM 1060-3.1:
+https://www.liebherr.com/en-au/p/ltm106031-4879196
+
+Officiële Liebherr LTM 1230-5.1:
+https://www.liebherr.com/en-gb/mobile-and-crawler-cranes/mobile-cranes/ltm-mobile-cranes/ltm-1230-5-1-4284069
+
+Officiële Liebherr LTM 1400-6.1:
+https://www.liebherr.com/en-au/mobile-and-crawler-cranes/mobile-cranes/ltm-mobile-cranes/ltm-1400-6-1-6910453
+
+Officiële Crane Planner 2.0:
+https://www.liebherr.com/en-ca/mobile-and-crawler-cranes/service/crane-planner-2-0-4678966
+
+Crane Planner-modelportfolio, februari 2026:
+https://www-assets.liebherr.com/media/bu-media/lhbu-lwn/lwn_mcf_pdf/lwe_crane_planner_2_0/2026/liebherr-cp2.0-portfolio-2026.02-en.pdf
+
+CRANIMAX / CRANEbee:
+https://www.cranimax.com/en/
+
+Het onafhankelijke archief vermeldde tijdens het onderzoek 1.372 brochures. Het stelt toestemming te hebben voor online publicatie. Dit bevestigt geen gebruiks- of herdistributierecht voor onze app.
+
+Liebherr Crane Planner gebruikt originele LML/LICCON-gegevens en bijbehorende rekenlogica. CRANEbee vermeldt meer dan 470 kraanmodellen. Toegang tot een API, ruwe database-export of datalicentie voor onze app is niet bevestigd.
+
+2. AANGETROFFEN MODELVERMELDINGEN
+
+Dit is een inventaris uit de archiefindex, geen gegarandeerd volledige of gevalideerde catalogus. Controleer naamswijzigingen, aliassen en dubbele vermeldingen in de fabrikantdocumenten. Alle onderstaande aanduidingen hebben het voorvoegsel LTM.
+
+Onder 100 ton, vanaf de 1060-vermeldingen:
+1060; 1060/1; 1060/2; 1060-3.1.
+1065.
+1070; 1070/1; 1070-4.1; 1070-4.2.
+1080; 1080/1; 1080/1-L; 1080/2.
+1090; 1090/1; 1090/2; 1090/3; 1090-4; 1090-4.1; 1090-4.2; 1090-4.3.
+1095-5.1.
+
+Middensegment:
+1100; 1100/1; 1100/2; 1100-4; 1100-4.1; 1100-4.2; 1100-5.1; 1100-5.2; 1100-5.3.
+1110-5.1; 1110-5.2.
+1120; 1120/1; 1120-4.1; 1120-4.2.
+1125.
+1130-5.1.
+1140.
+1150; 1150/1; 1150-5.1; 1150-5.3; 1150-5.4; 1150-5.4 E; 1150-6.1.
+1160; 1160/1; 1160/2; 1160-5.1; 1160-5.2.
+1200; 1200/1; 1200-5.1.
+1220/1; 1220-5.1; 1220-5.2.
+1225.
+1230-5.1.
+1250/1; 1250-5.1; 1250-6.1.
+
+De archiefindex vermeldt ook 1280 met een verwijzing naar bouw als 1300/1. Deze relatie moet worden gecontroleerd.
+
+Zwaardere modellen:
+1300; 1300/1; 1300-6.1; 1300-6.2; 1300-6.3; 1300-6.4.
+1350-6.1.
+1400; 1400/1; 1400-7.1.
+
+Let op: de huidige officiële productpagina noemt voor de LTM 1400-6.1 maximaal 450 metrische ton. Neem deze niet automatisch op als 400-tonner vanwege de modelnaam. Houd 1400-6.1 en 1400-7.1 afzonderlijk.
+
+Andere families zoals LR, LTR, LRT, LTF, LG en havenkranen zijn in dit onderzoek niet volledig geïnventariseerd.
+
+3. DIRECTE PDF-LINKS
+
+Deze fabrikantdocumenten zijn tijdens het onderzoek geopend. De genoemde datum is de documentuitgave, niet het bouwjaar. Niet alle tabelcellen zijn gecontroleerd.
+
+LTM 1060-3.1
+TD 250.00.DEFISR03.2013
+18 pagina’s; gemarkeerd als voorlopig.
+https://falk-mail.dk/LTM/LTM1060-3.1_TD250.00.DEFISR03.2013.pdf
+
+LTM 1110-5.2
+TD 305.02.DEFISR08.2023
+42 pagina’s.
+https://falk-mail.dk/LTM/LTM1110-5.2_TD305.02.DEFISR08.2023.pdf
+
+LTM 1160-5.2
+TD 253.03.DEFISR06.2022
+40 pagina’s.
+https://falk-mail.dk/LTM/LTM1160-5.2_TD253.03.DEFISR06.2022.pdf
+
+LTM 1230-5.1
+TD 270.02.DEFISR04.2021
+66 pagina’s.
+https://falk-mail.dk/LTM/LTM1230-5.1_TD270.02.DEFISR04.2021.pdf
+
+LTM 1250-5.1
+TD 259.04.DEFISR02.2022
+80 pagina’s.
+https://falk-mail.dk/LTM/LTM1250-5.1_TD259.04.DEFISR02.2022.pdf
+
+LTM 1300-6.2
+TD 240.00.DEFISR06.2026
+78 pagina’s.
+https://falk-mail.dk/LTM/LTM1300-6.2_TD240.00.DEFISR06.2026.pdf
+
+LTM 1300-6.4
+TD 318.01.DEFISR11.2025
+60 pagina’s.
+https://falk-mail.dk/LTM/LTM1300-6.4_TD318.01.DEFISR11.2025.pdf
+
+LTM 1400-7.1
+TD 146.01.DEFISR09.2014
+58 pagina’s.
+https://falk-mail.dk/LTM/LTM1400-7.1_TD146.01.DEFISR09.2014.pdf
+
+4. BEVESTIGDE ALGEMENE MODELGEGEVENS
+
+Dit zijn algemene specificaties van officiële productpagina’s, geen capaciteit voor een willekeurige hijsconfiguratie.
+
+LTM 1060-3.1:
+- Maximale capaciteit: 60 t bij 2,10 m vlucht.
+- Telescoopgiek: 10,30–48 m.
+- Vakwerkjib: 2,50–16 m.
+- Totaal ballast: 12,80 t.
+- 3 assen.
+
+LTM 1230-5.1:
+- Maximale capaciteit: 230 t bij 3 m vlucht.
+- Telescoopgiek: 12,70–75 m.
+- Vakwerkjib: 3,40–43 m.
+- Totaal ballast: 72 t.
+- 5 assen.
+
+5. WEGWIJZER LTM 1230-5.1, UITGAVE APRIL 2021
+
+Gedrukte paginanummers:
+- Afmetingen: 3.
+- Gewichten en werksnelheden: 8.
+- Ballast: 9.
+- Rijden op weg/bouwplaats: 10.
+- Giek/jibcombinaties: 11 en 14.
+- Variabel gieksysteem: 12–13.
+- T: 15–18.
+- TK/TNZK: 19–23.
+- TVK/TVNZK: 24–37.
+- TS: 38–45.
+- TNZF: 46–57.
+- Uitrusting: 58–63.
+- Symbolen: 64.
+- Opmerkingen: 65.
+
+Neem de bedrijfsmodus- en tabelcodes exact over en koppel ze aan de legenda.
+
+6. BOUWJAREN EN DOCUMENTVERSIES
+
+Houd deze gegevens afzonderlijk:
+- Introductiejaar van het model.
+- Productieperiode.
+- Bouwjaar van een individuele kraan.
+- Kraanserienummer.
+- Documentnummer en revisie.
+- Publicatiedatum.
+- Toepasselijk serienummerbereik.
+
+Een brochuredatum bewijst geen bouwjaargrens. Voor de LTM 1060-3.1 staan bijvoorbeeld documentuitgaven uit 2013, 2017, 2019, 2022, 2023 en 2025 in het archief. Daarmee is niet vastgesteld welke tabel voor ieder individueel bouwjaar of serienummer geldt.
+
+Laat onbevestigde jaren en serienummerbereiken onbekend. Gebruik voorlopige brochures niet zonder verdere controle als definitieve operationele lasttabellen.
+
+7. VOORGESTELDE DATABASESTRUCTUUR
+
+Dit is een ontwerpvoorstel, geen officiële Liebherr-API.
+
+MODELLEN
+Fabrikant, familie, exacte modelaanduiding, bewezen aliassen, nominale metrische capaciteit en productiegegevens met bron.
+
+INDIVIDUELE KRANEN
+Model, bouwjaar, serienummer, aanwezige opties en toepasselijke documenten.
+
+DOCUMENTEN
+Bron-URL, uitgever, documentnummer, revisie, datum, eenheden, taal, voorlopige status, paginanummering, validatiestatus en rechtenstatus.
+
+CONFIGURATIES
+Bedrijfsmodus, telescoop-/uitschuifstand, giek, jibtype, jiblengte, jibhoek, verlengstukken, eventuele afspanning, ballastmassa, ballaststraal, steunpootstanden, zwenksector en beperkingen.
+
+LASTTABELLEN
+Tabelcode, configuratie-ID, vlucht, giek-/jibparameters, capaciteit, windvoorwaarden, bronpagina, opmerkingen en geldigheidsbereik.
+
+HIJSSYSTEEM
+Inschering, lijnkrachtlimieten, haakblokcapaciteit, blokgewicht en voorgeschreven lastaftrekken.
+
+VALIDATIE
+Afzonderlijke statussen voor gevonden, uitgelezen, visueel gecontroleerd en inhoudelijk gevalideerd.
+
+8. VERWERKINGSOPDRACHT VOOR CLAUDE
+
+Gebruik bovenstaande bronnen om de kraandatabase voor Hardpoint Lift Check op te bouwen.
+
+- Open de fabrikant-PDF’s waar mogelijk. Meld ontbrekende toegang; verzin geen documentinhoud.
+- Maak eerst een dekkingsregister per model en documentversie.
+- Controleer de nominale capaciteit in metrische ton; leid deze niet alleen af uit het typenummer.
+- Behandel de modelleninventaris niet als volledige of gevalideerde catalogus.
+- Houd documentdatum, introductiejaar, productieperiode en individueel bouwjaar gescheiden.
+- Extraheer lasttabellen met alle voorwaarden, legenda’s en voetnoten.
+- Koppel iedere waarde aan model, documentversie, tabelcode, configuratie en bronpagina.
+- Controleer tekstextractie/OCR visueel op kolomverschuivingen, decimalen, eenheden en lege cellen.
+- Verwar metrische tonnen niet met Amerikaanse short tons; gebruik bij voorkeur fabrikantuitgaven [m/t].
+- Bereken geen capaciteit uit een generieke momentformule of de nominale tonnage.
+- Vul ontbrekende tabelwaarden nooit met schattingen.
+- Interpoleer alleen wanneer de fabrikant dit voor die toepassing expliciet toestaat en volgens diens procedure.
+- Leid geen VarioBase-capaciteiten of steunpootreacties af door tussen brochurewaarden te interpoleren.
+- Houd kraancapaciteit, hijslijnlimieten, haakbloklimieten en netto toelaatbare last gescheiden.
+- Volg bij lastaftrekken de definities van het betreffende fabrikantdocument.
+- Blokkeer capaciteitsuitkomsten wanneer bron of configuratie niet aantoonbaar passend is.
+- Een volledig ingevuld formulier maakt onvolledige tabellen niet geldig.
+- Controleer rechten voor commercieel gebruik en verspreiding afzonderlijk. Een openbare PDF of softwareabonnement bewijst geen datalicentie.
+
+9. NOG OPEN
+
+- Volledige historische modeldekking.
+- Ontbrekende uitvoeringen en mogelijke aliassen.
+- Bevestigde bouwjaargrenzen en serienummerbereiken.
+- Alle relevante PDF’s en revisies verzamelen.
+- Volledige extractie en inhoudelijke controle van lasttabellen.
