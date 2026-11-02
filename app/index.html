@@ -838,8 +838,9 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
           <div class="lift-photos" id="qThumbs"></div>
           <label class="btn sm secondary addph" style="margin-top:8px">Foto toevoegen<input type="file" id="qPhoto" accept="image/*" capture="environment" multiple hidden></label></div></div>
         <div class="qstep"><span class="qn">3</span><div class="qbody"><h3>Hijsmiddelen</h3>
-          <ul class="rgl" id="qRigList"></ul>
-          <div class="row-actions"><input class="inl" id="qRigN" type="number" inputmode="numeric" min="1" value="1" aria-label="Aantal" style="max-width:80px"><select class="inl" id="qRigPreset" aria-label="Hijsmiddel kiezen"></select><button class="btn sm secondary" type="button" id="qRigAdd">Toevoegen</button></div></div></div>
+          <label for="qRigText">Welke hijsmiddelen heb je gebruikt?</label>
+          <textarea class="inl" id="qRigText" rows="4" maxlength="3000" placeholder="Bijv. 2 rondstroppen van 5 ton, 4 harpsluitingen en een hijsbalk" style="resize:vertical"></textarea>
+          </div></div>
         <div class="qstep"><span class="qn">4</span><div class="qbody"><h3>Afstanden en tonnage</h3>
           <div class="fgrid">
             <div class="fld"><label for="qCrane">Kraan</label><select id="qCrane"></select></div>
@@ -2791,12 +2792,13 @@ function qCap(){
 }
 ['qRadius','qWeight'].forEach(id=>$(id).oninput=qCap);$('qCrane').onchange=qFillCfg;$('qBallast').onchange=qFillBoom;$('qBoom').onchange=qCap;
 $('qCrit').onchange=()=>{$('qCrit').dataset.touched='1'};
-$('qRigPreset').innerHTML=PRESETS.map((p,i)=>`<option value="${i}">${p[0]}</option>`).join('');
 function qRenderRig(){
-  $('qRigList').innerHTML=qRig.map((x,i)=>`<li><span class="badge">${x.n}×</span>${esc(x.name)}<button class="x" type="button" data-qdel="${i}">Verwijderen</button></li>`).join('')||`<li class="note">${esc(tr('Nog geen hijsmiddelen toegevoegd.'))}</li>`;
-  $('qRigList').querySelectorAll('[data-qdel]').forEach(b=>b.onclick=()=>{qRig.splice(+b.dataset.qdel,1);qRenderRig()});
+  $('qRigText').value=qRig.map(x=>(x.n>1?x.n+'× ':'')+x.name).join('\n');
 }
-$('qRigAdd').onclick=()=>{const p=PRESETS[+$('qRigPreset').value];const n=Math.max(1,Math.round(num($('qRigN').value)||1));const ex=qRig.find(x=>x.name===p[0]);if(ex)ex.n+=n;else qRig.push({name:p[0],n,kg:p[1]});$('qRigN').value=1;qRenderRig()};
+$('qRigText').oninput=()=>{
+  const name=$('qRigText').value.trim();
+  qRig=name?[{name,n:1,kg:null}]:[];
+};
 function qRenderThumbs(){
   $('qThumbs').innerHTML=qPhotos.map((u,i)=>`<button type="button" class="thumb q" data-qph="${i}" aria-label="Foto ${i+1} verwijderen"><img src="${u}" alt=""><span aria-hidden="true">×</span></button>`).join('');
   $('qThumbs').querySelectorAll('[data-qph]').forEach(b=>b.onclick=()=>{qPhotos.splice(+b.dataset.qph,1);qRenderThumbs()});
