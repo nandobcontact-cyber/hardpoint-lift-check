@@ -1,6 +1,6 @@
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 const $=id=>document.getElementById(id);
-let client,user,member,projects=[],members=[],current=null,epoch=0;
+let client,user,member,projects=[],members=[],current=null,epoch=0,workspace=null;
 const say=s=>$('status').textContent=s;
 const check=r=>{if(r.error)throw r.error;return r.data};
 const rpc=async(name,args)=>check(await client.rpc(name,args));
@@ -8,7 +8,7 @@ const roleName=r=>({office:'Kantoor',rigger:'Rigger',operator:'Machinist'}[r]||r
 const person=id=>members.find(m=>m.user_id===id)?.name||'Medewerker';
 function message(e){return e?.message||'Verzoek niet gelukt. Controleer je verbinding en probeer opnieuw.'}
 async function action(button,fn){button.disabled=true;try{await fn()}catch(e){say(message(e))}finally{button.disabled=false}}
-function clearPrivate(){epoch++;user=null;member=null;current=null;projects=[];members=[];for(const id of ['lifts','assignments'])$(id).replaceChildren();for(const id of ['workspace','onboarding','office','logout'])$(id).hidden=true;$('identity').textContent='';$('newCode').value='';$('newCode').hidden=true}
+function clearPrivate(){epoch++;user=null;member=null;current=null;workspace=null;projects=[];members=[];for(const id of ['lifts','assignments','craneCollection'])$(id).replaceChildren();for(const id of ['workspace','onboarding','office','logout'])$(id).hidden=true;$('identity').textContent='';$('newCode').value='';$('newCode').hidden=true}
 async function session(){
   clearPrivate();user=check(await client.auth.getUser())?.user;
   if(!user){$('auth').hidden=false;return}
@@ -16,7 +16,12 @@ async function session(){
   member=check(await client.from('hlc_members').select('*').eq('user_id',user.id).maybeSingle());
   $('onboarding').hidden=!!member;
   if(!member){say('Maak een bedrijf aan of gebruik de uitnodigingscode van kantoor.');return}
-  $('identity').textContent=member.name+' · '+roleName(member.role);
+  workspace=check(await client.from('hlc_companies').select('*').eq('id',member.company_id).single());
+  $('identity').textContent=member.name+' · '+(workspace.account_type==='solo'?'Zelfstandig':roleName(member.role));
+  $('officeTitle').textContent=workspace.account_type==='solo'?'Mijn werkruimte':'Kantoor';
+  $('invitePanel').hidden=workspace.account_type!=='company';
+  $('craneCollectionTitle').textContent=workspace.account_type==='solo'?'Mijn kranen':'Bedrijfskranen';
+  $('collectionForm').hidden=member.role!=='office';
   $('workspace').hidden=false;$('office').hidden=member.role!=='office';
   await refresh();say('Verbonden. Projecten en foto’s worden online opgeslagen.');
 }
@@ -27,18 +32,19 @@ async function refresh(){
   $('project').replaceChildren();
   for(const p of projects){const o=document.createElement('option');o.value=p.id;o.textContent=p.name;$('project').append(o)}
   if(projects.some(p=>p.id===selected))$('project').value=selected;
+  await loadCollection();
   await loadProject();
 }
 async function loadProject(){
   const generation=++epoch;
   current=projects.find(p=>p.id===$('project').value)||null;
   $('projectLocation').textContent=current?.location||(!current?'Nog geen projecten toegewezen.':'');
-  $('liftPanel').hidden=!current;$('assignPanel').hidden=!current||member.role!=='office';
+  $('liftPanel').hidden=!current;$('assignPanel').hidden=!current||member.role!=='office'||workspace.account_type==='solo';
   $('assignments').replaceChildren();$('lifts').replaceChildren();if(!current)return;
   const projectId=current.id;
   const assigned=check(await client.from('hlc_assignments').select('user_id').eq('project_id',projectId));
   if(generation!==epoch)return;
-  if(member.role==='office')for(const m of members){
+  if(member.role==='office'&&workspace.account_type==='company')for(const m of members){
     const label=document.createElement('label');label.className='check';const c=document.createElement('input');c.type='checkbox';c.checked=assigned.some(a=>a.user_id===m.user_id);
     c.onchange=()=>action(c,async()=>{try{await rpc('hlc_assign',{project:projectId,member:m.user_id,assigned:c.checked});say('Toewijzing opgeslagen.')}catch(e){c.checked=!c.checked;throw e}});
     label.append(c,document.createTextNode(m.name+' · '+roleName(m.role)));$('assignments').append(label);
@@ -72,13 +78,27 @@ $('authForm').onsubmit=e=>{e.preventDefault();action(e.submitter,async()=>{check
 $('signup').onclick=e=>{if(!$('authForm').reportValidity())return;action(e.target,async()=>{const r=check(await client.auth.signUp({email:$('email').value.trim(),password:$('password').value}));$('password').value='';if(r.session)await session();else say('Controleer je mailbox om je e-mailadres te bevestigen. Log daarna hier in.')})};
 $('logout').onclick=e=>action(e.target,async()=>{check(await client.auth.signOut());clearPrivate();$('auth').hidden=false;say('Uitgelogd.')});
 const displayName=()=>{const n=$('displayName').value.trim();if(!n)throw new Error('Vul je volledige naam in.');return n};
-$('companyForm').onsubmit=e=>{e.preventDefault();action(e.submitter,async()=>{await rpc('hlc_create_company',{company_name:$('companyName').value.trim(),display_name:displayName()});await session()})};
+$('companyForm').onsubmit=e=>{e.preventDefault();action(e.submitter,async()=>{await rpc('hlc_create_workspace',{workspace_type:$('accountType').value,workspace_name:$('companyName').value.trim(),display_name:displayName()});await session()})};
 $('joinForm').onsubmit=e=>{e.preventDefault();action(e.submitter,async()=>{await rpc('hlc_join',{invite_token:$('inviteCode').value.trim(),display_name:displayName()});$('inviteCode').value='';await session()})};
 $('projectForm').onsubmit=e=>{e.preventDefault();action(e.submitter,async()=>{const id=await rpc('hlc_create_project',{project_name:$('projectName').value.trim(),project_location:$('location').value.trim()});await refresh();$('project').value=id;await loadProject();e.target.reset();say('Project aangemaakt. Wijs hieronder medewerkers toe.')})};
 $('invite').onclick=e=>action(e.target,async()=>{$('newCode').value=await rpc('hlc_create_invite',{member_role:$('inviteRole').value});$('newCode').hidden=false;say('Uitnodigingscode aangemaakt. Deel deze met de bedoelde medewerker.')});
 $('liftForm').onsubmit=e=>{e.preventDefault();action(e.submitter,async()=>{if(!current)throw new Error('Kies eerst een project.');await rpc('hlc_create_lift',{project:current.id,lift_description:$('description').value.trim(),crane_name:$('craneName').value.trim()});e.target.reset();await loadProject();say('Hijs opgeslagen. Voeg de foto toe bij de geregistreerde hijs.')})};
 $('project').onchange=()=>loadProject().catch(e=>say(message(e)));
 $('refresh').onclick=e=>action(e.target,async()=>{await refresh();say('Overzicht vernieuwd.')});
+
+async function loadCollection(){
+  const cranes=check(await client.from('hlc_fleet').select('*').order('created_at',{ascending:false}));
+  const box=$('craneCollection');box.replaceChildren();
+  if(!cranes.length){box.textContent='Nog geen kranen bewaard.';return}
+  for(const crane of cranes){
+    const row=document.createElement('p');row.textContent=crane.manufacturer+' '+crane.model+(crane.label?' · '+crane.label:'');box.append(row);
+  }
+}
+$('collectionForm').onsubmit=e=>{e.preventDefault();action(e.submitter,async()=>{
+  await rpc('hlc_add_crane',{crane_make:$('collectionMake').value.trim(),crane_model:$('collectionModel').value.trim(),crane_label:$('collectionLabel').value.trim()});
+  e.target.reset();await loadCollection();say('Kraan bewaard in je online verzameling.');
+})};
+
 try{
   let response=await fetch('/api/team-config');if(response.status===503||response.status===404)response=await fetch('./team-config.json');if(!response.ok)throw new Error('De online teamomgeving is nog niet aangesloten. De beheerder moet eerst de databasekoppeling activeren.');
   const {url,key}=await response.json();client=createClient(url,key,{auth:{storage:sessionStorage,storageKey:'hlc-team-auth',autoRefreshToken:true,persistSession:true,detectSessionInUrl:false}});
