@@ -271,6 +271,14 @@ h2{font:700 38px/1.05 "Barlow Condensed","Arial Narrow",sans-serif;margin:0 0 8p
 dialog{border:0;border-radius:14px;padding:26px;max-width:460px;width:calc(100% - 32px);background:var(--surface);color:var(--ink);box-shadow:0 30px 60px -20px rgba(0,0,0,.5)}
 dialog::backdrop{background:rgba(5,12,18,.6)}
 dialog h2{font-size:32px}
+#loginDlg form label{display:block;font-weight:600;font-size:15px;margin:12px 0 6px;color:var(--muted)}
+#loginDlg form input{width:100%;font:500 17px/1.2 "Barlow",sans-serif;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:8px;padding:12px 14px;box-sizing:border-box}
+#loginDlg .acc-tabs{display:flex;gap:8px;margin:14px 0 4px}#loginDlg .acc-tabs button{flex:1;padding:10px;border-radius:8px;border:1px solid var(--line);background:var(--field);color:var(--ink);font:600 15px "Barlow",sans-serif;cursor:pointer}
+#loginDlg .acc-tabs button[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+#accMsg{margin:12px 0 0;font-weight:600}#accMsg:empty{display:none}#accMsg.err{color:var(--stop)}
+#loginDlg .linkbtn{background:none;border:0;padding:0;margin-top:10px;color:var(--ink);text-decoration:underline;cursor:pointer;font:500 14px "Barlow",sans-serif}
+#loginDlg details{margin-top:18px;border-top:1px solid var(--line);padding-top:12px}#loginDlg summary{cursor:pointer;font-weight:600;color:var(--muted)}
+#cloudBadge{display:inline-block;font-size:13px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--field);border:1px solid var(--line);margin-left:6px}
 .choice{display:block;width:100%;text-align:left;background:var(--field);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-top:12px;cursor:pointer;color:var(--ink);font:500 16px "Barlow",sans-serif}
 .choice b{display:block;font:700 20px "Barlow Condensed",sans-serif}
 .choice:hover{border-color:var(--signal)}
@@ -825,7 +833,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 </main>
 
 <main class="screen" data-screen="logboek" hidden>
-<div class="wrap"><p class="note">Dit is het lokale prototype-logboek. Voor persoonlijke accounts en gedeelde projecten: <a href="team.html">open Team en projecten</a>.</p></div>
+<div class="wrap"><p class="note">Ingelogd met je eigen account? Dan worden je hijsen en foto’s online in je account bewaard. Zonder account blijft alles alleen in deze browser. Voor gedeelde bedrijfsprojecten: <a href="team.html">open Team en projecten</a>.</p></div>
   <div class="wrap">
   <div class="screen-head"><a class="back" href="#/">← Start</a><h1>Hijslogboek</h1><p id="logLead">Alle hijsen van je team op één plek. Zie wie ervaring heeft met welke kraan en met kritische hijsen.</p></div>
     <div class="panel" id="logLogin"><h3 style="margin:0 0 6px;font:700 24px 'Barlow Condensed',sans-serif">Log in om het hijslogboek te zien</h3><p class="note" style="margin-bottom:12px">Het logboek is per bedrijf. Alleen je eigen team ziet de hijsen.</p><button class="btn" type="button" id="logLoginBtn" style="margin-top:0">Inloggen</button></div>
@@ -1228,10 +1236,24 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
 <dialog id="loginDlg" aria-labelledby="loginH">
   <h2 id="loginH">Inloggen</h2>
-  <p class="note">Dit is een demo. Kies een account om te zien hoe Hardpoint Lift Check werkt voor een bedrijf of voor een freelancer.</p>
+  <p class="note" id="accIntro">Met een eigen account bewaar je je hijsen, foto’s en kranen veilig online. Je ziet ze op elk apparaat waarop je inlogt.</p>
+  <div id="accBox">
+    <div class="acc-tabs" role="group" aria-label="Inloggen of account aanmaken"><button type="button" id="accTabIn" aria-pressed="true">Inloggen</button><button type="button" id="accTabUp" aria-pressed="false">Account aanmaken</button></div>
+    <form id="accForm" novalidate>
+      <div id="accNameRow" hidden><label for="accName">Je naam</label><input id="accName" autocomplete="name" maxlength="120" placeholder="Voor- en achternaam"></div>
+      <label for="accEmail">E-mailadres</label><input id="accEmail" type="email" autocomplete="email" required>
+      <div id="accPwRow"><label for="accPw">Wachtwoord</label><input id="accPw" type="password" autocomplete="current-password" minlength="8"></div>
+      <p class="note" id="accPwHint" hidden>Minimaal 8 tekens.</p>
+      <div class="actions"><button class="btn" type="submit" id="accSubmit">Inloggen</button><button class="btn secondary" type="button" id="loginCancel">Annuleren</button></div>
+      <button type="button" class="linkbtn" id="accForgot">Wachtwoord vergeten?</button>
+    </form>
+  </div>
+  <p id="accMsg" role="status" aria-live="polite"></p>
+  <details id="accDemo"><summary>Alleen rondkijken? Open een demo-account</summary>
+  <p class="note">De demo gebruikt verzonnen voorbeeldgegevens en bewaart alles alleen in deze browser.</p>
   <button class="choice" type="button" data-acct="bedrijf"><b>Demo Kraanverhuur BV</b>Bedrijfsabonnement, 10 accounts, gedeeld wagenpark</button>
   <button class="choice" type="button" data-acct="freelancer"><b>Jan de Vries</b>Freelancer, 1 account, eigen kranenlijst</button>
-  <div class="actions"><button class="btn secondary" type="button" id="loginCancel">Annuleren</button></div>
+  </details>
 </dialog>
 
 <dialog id="v3d" aria-labelledby="v3dTitle">
@@ -1576,7 +1598,7 @@ const catLabel=k=>`${k.merk} ${k.type}`;
 const variantsOf=k=>mine.filter(c=>c.merk.toLowerCase()===k.merk.toLowerCase()&&c.type.toLowerCase()===k.type.toLowerCase());
 let mine=[];
 try{const s=localStorage.getItem(STORE);if(s)mine=JSON.parse(s)||[]}catch(e){mine=[]}
-const saveMine=()=>{try{localStorage.setItem(STORE,JSON.stringify(mine))}catch(e){}};
+const saveMine=()=>{try{localStorage.setItem(STORE,JSON.stringify(mine))}catch(e){}if(CLOUD&&CLOUD.on)CLOUD.put('profile','mine',{list:mine})};
 const all=()=>mine;
 const CATC=CATALOG.map(k=>({id:'cat:'+k.id,merk:k.merk,type:k.type,jaar:null,custom:false,catalog:k,charts:{},spec:{klasse:k.klasse}}));
 const anyC=()=>mine.concat(CATC);
@@ -2119,28 +2141,30 @@ const ACCTS={bedrijf:{name:'Demo Kraanverhuur BV',user:'Sanne Peters',seats:10},
 try{session=localStorage.getItem('vluchtcheck-sessie')||null}catch(e){}
 /* inloggen staat voorlopig uit: zet FLEET_LOCK op true om het weer aan te zetten */
 const FLEET_LOCK=false;
-if(!FLEET_LOCK&&!session)session='bedrijf';
+if(session==='me')session=null;
 function loadAcct(){
   fleet=[];team=[];if(!session)return;
+  if(session==='me'){fleet=(CLOUD.fleet||[]).map(x=>({...x}));team=[];return}
   try{const f=localStorage.getItem('vluchtcheck-wagenpark-'+session);if(f)fleet=JSON.parse(f)}catch(e){}
   try{const t=localStorage.getItem('vluchtcheck-team-'+session);if(t)team=JSON.parse(t)}catch(e){}
   if(!fleet.length)fleet=session==='bedrijf'?[{num:'KR-01',craneId:'cat:l1300-63',busy:false},{num:'KR-02',craneId:'cat:l1100-53',busy:true},{num:'KR-03',craneId:'cat:l1060-31',busy:false}]:[{num:'Favoriet',craneId:'cat:l1090-42',busy:false}];
   if(!team.length)team=session==='bedrijf'?[{n:'Sanne Peters',r:'Beheerder'},{n:'Mehmet Yilmaz',r:'Machinist'},{n:'Kees Janssen',r:'Rigger'},{n:'Lisa de Boer',r:'Werkvoorbereider'}]:[{n:'Jan de Vries',r:'Freelancer'}];
 }
-const saveAcct=()=>{if(!session)return;try{localStorage.setItem('vluchtcheck-wagenpark-'+session,JSON.stringify(fleet));localStorage.setItem('vluchtcheck-team-'+session,JSON.stringify(team))}catch(e){}};
+const saveAcct=()=>{if(!session)return;if(session==='me'){CLOUD.put('fleet','main',{list:fleet});return}try{localStorage.setItem('vluchtcheck-wagenpark-'+session,JSON.stringify(fleet));localStorage.setItem('vluchtcheck-team-'+session,JSON.stringify(team))}catch(e){}};
 function renderAcct(){setTimeout(()=>{try{loadLog();renderLog();fillTeamNames()}catch(e){}},0);
   const box=$('acctBox');
   $('menuAcct').textContent=session?'Uitloggen':'Inloggen';
-  if(!session){box.innerHTML='<button class="navbtn" type="button" id="loginBtn">Inloggen</button>';$('loginBtn').onclick=()=>$('loginDlg').showModal();$('wagenpark').hidden=true;$('navFleet').hidden=true;$('fleetLogin').hidden=false;
+  if(!session){box.innerHTML='<button class="navbtn" type="button" id="loginBtn">Inloggen</button>';$('loginBtn').onclick=()=>openLogin();$('wagenpark').hidden=true;$('navFleet').hidden=true;$('fleetLogin').hidden=false;
     $('tileFleetT').textContent='Wagenpark';$('tileFleetD').textContent='Log in om de kranen van je bedrijf of je favorieten te zien.';$('fleetScreenT').textContent='Wagenpark';$('menuFleet').textContent='Wagenpark';return}
   $('fleetLogin').hidden=true;
   $('tileFleetT').textContent=session==='bedrijf'?'Wagenpark':'Mijn kranen';
   $('tileFleetD').textContent=session==='bedrijf'?'Jullie kranen, wie er beschikbaar is en wie er toegang heeft.':'Je favoriete kranen, met één klik klaar om te rekenen.';
   $('fleetScreenT').textContent=session==='bedrijf'?'Wagenpark':'Mijn kranen';
   $('menuFleet').textContent=session==='bedrijf'?'Wagenpark':'Mijn kranen';
-  const a=ACCTS[session];
+  const a=ACCTS[session]||ACCTS.bedrijf;
   box.innerHTML=`<span class="acct"><span class="av" aria-hidden="true">${a.user.split(' ').map(x=>x[0]).join('').slice(0,2)}</span><span class="nm">${a.name}</span><button class="navbtn" type="button" id="logoutBtn">Uitloggen</button></span>`;
-  $('logoutBtn').onclick=()=>{session=null;try{localStorage.removeItem('vluchtcheck-sessie')}catch(e){}loadAcct();renderAcct();fillCranes($('crane').value);finder()};
+  if(session==='me')$('acctBox').querySelector('.nm').insertAdjacentHTML('afterend','<span id="cloudBadge" title="Je gegevens worden online in je account opgeslagen">Online</span>');
+  $('logoutBtn').onclick=async()=>{if(session==='me'){await CLOUD.signOut();return}session=null;try{localStorage.removeItem('vluchtcheck-sessie')}catch(e){}loadAcct();renderAcct();fillCranes($('crane').value);finder()};
   $('wagenpark').hidden=false;$('navFleet').hidden=false;$('navFleet').textContent=session==='bedrijf'?'Wagenpark':'Mijn kranen';
   $('fleetTitle').textContent=session==='bedrijf'?`Wagenpark van ${a.name}`:'Mijn kranen';
   $('fleetLead').textContent=session==='bedrijf'?'Iedereen in je bedrijf ziet dezelfde kranen. Kies er een en je rekent er direct mee.':'Zet de kranen waar je vaak op zit bij je favorieten, dan heb je ze met één klik.';
@@ -2167,8 +2191,8 @@ $('fAdd').onclick=()=>{const id=$('fCrane').value,nm=$('fNum').value.trim()||$('
 $('tAdd').onclick=()=>{const n=$('tName').value.trim();if(!n)return;team.push({n,r:'Machinist'});$('tName').value='';saveAcct();renderTeam()};
 document.querySelectorAll('.choice').forEach(b=>b.onclick=()=>{session=b.dataset.acct;try{localStorage.setItem('vluchtcheck-sessie',session)}catch(e){}$('loginDlg').close();loadAcct();renderAcct();fillCranes();setHookDefault();fillConfig();finder()});
 $('loginCancel').onclick=()=>$('loginDlg').close();
-$('fleetLoginBtn').onclick=()=>$('loginDlg').showModal();
-$('logLoginBtn').onclick=()=>$('loginDlg').showModal();
+$('fleetLoginBtn').onclick=()=>openLogin();
+$('logLoginBtn').onclick=()=>openLogin();
 
 /* ---------- AI-koppeling ----------
    Binnen de Claude-app: claude.use('sample').
@@ -2499,7 +2523,7 @@ function closeMenu(){$('menuPanel').hidden=true;$('menuBtn').setAttribute('aria-
 $('menuBtn').onclick=e=>{e.stopPropagation();const open=$('menuPanel').hidden;$('menuPanel').hidden=!open;$('menuBtn').setAttribute('aria-expanded',String(open));if(open){$('menuPanel').scrollTop=0;if(!matchMedia('(pointer:coarse)').matches)$('menuPanel').querySelector('a:not([hidden])')?.focus({preventScroll:true})}};
 /* pointerdown in plaats van click: op iPhone vuurt een tik op niet-klikbare plekken geen click af */
 document.addEventListener('pointerdown',e=>{if(!$('menuPanel').hidden&&!e.target.closest('.menu-wrap'))closeMenu()});
-$('menuAcct').onclick=e=>{e.preventDefault();closeMenu();if(session)$('logoutBtn')?.click();else $('loginDlg').showModal()};
+$('menuAcct').onclick=e=>{e.preventDefault();closeMenu();if(session)$('logoutBtn')?.click();else openLogin()};
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('menuPanel').hidden){closeMenu();$('menuBtn').focus()}});
 $('menuPanel').addEventListener('click',e=>{if(e.target.closest('a'))closeMenu()});
 
@@ -2593,6 +2617,158 @@ document.querySelectorAll('canvas[data-sig]').forEach(cv=>{
 document.querySelectorAll('[data-sigclear]').forEach(b=>b.onclick=()=>{const k=b.dataset.sigclear,cv=document.querySelector(`canvas[data-sig="${k}"]`);cv.getContext('2d').clearRect(0,0,cv.width,cv.height);sigData[k]=null;renderPlan()});
 addEventListener('resize',()=>{document.querySelectorAll('canvas[data-sig]').forEach(cv=>{cv.width=0});sizeSigs()});
 
+/* ---------- persoonlijk account (Supabase) ----------
+   Eigen account met e-mail en wachtwoord. Hijslogboek, foto's, wagenpark en eigen kranen
+   worden per gebruiker online opgeslagen (tabel hlc_user_items, bucket hlc-user-photos).
+   Alleen de publieke publishable key wordt gebruikt; de database staat per gebruiker afgeschermd. */
+var CLOUD={on:false,ready:false,client:null,user:null,lifts:[],fleet:[],urls:{},synced:{},q:Promise.resolve(),
+  async init(){
+    const hadCode=/[?&]code=/.test(location.search),urlErr=new URLSearchParams(location.search).get('error_description');
+    try{
+      let r=null;try{r=await fetch('/api/team-config',{cache:'no-store'})}catch(e){}
+      if(!r||!r.ok)r=await fetch('./team-config.json',{cache:'no-store'});
+      if(!r.ok)throw new Error('config');
+      const {url,key}=await r.json();
+      const {createClient}=await import('https://esm.sh/@supabase/supabase-js@2.58.0');
+      this.client=createClient(url,key,{auth:{storageKey:'hlc-account-auth',persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'pkce'}});
+      this.ready=true;
+      this.client.auth.onAuthStateChange((ev,ses)=>setTimeout(()=>{
+        if(ev==='PASSWORD_RECOVERY'){openLogin('reset');return}
+        if((ev==='SIGNED_IN'||ev==='INITIAL_SESSION')&&ses&&!this.on&&!this.starting){this.starting=true;this.start(ses.user).catch(e=>{this.note('Je account kon niet geladen worden: '+this.msg(e),true)}).finally(()=>this.starting=false)}
+        if(ev==='SIGNED_OUT'&&this.on)this.stop();
+      },0));
+      const {data}=await this.client.auth.getSession();
+      if(hadCode||urlErr){try{history.replaceState(null,'',location.pathname+location.hash)}catch(e){}}
+      if(urlErr)openLogin('in',decodeURIComponent(urlErr.replace(/\+/g,' ')),true);
+      else if(hadCode&&!data.session)openLogin('in','Je e-mailadres is bevestigd. Log nu in met je e-mailadres en wachtwoord.');
+    }catch(e){this.ready=false}
+  },
+  msg(e){const m=(e&&e.message)||'';
+    if(/Invalid login credentials/i.test(m))return 'E-mailadres of wachtwoord klopt niet.';
+    if(/Email not confirmed/i.test(m))return 'Bevestig eerst je e-mailadres via de link in de mail die we je stuurden.';
+    if(/already registered|already exists/i.test(m))return 'Er bestaat al een account met dit e-mailadres. Log in of kies "Wachtwoord vergeten?".';
+    if(/Password should be|password.*characters/i.test(m))return 'Kies een langer wachtwoord (minimaal 8 tekens).';
+    if(/rate limit|too many/i.test(m))return 'Te veel pogingen achter elkaar. Wacht even en probeer het opnieuw.';
+    if(/fetch|network/i.test(m))return 'Geen verbinding. Controleer je internet en probeer het opnieuw.';
+    return m||'Dat is niet gelukt. Probeer het opnieuw.'},
+  note(t,err){let el=document.getElementById('cloudNote');if(!el){el=document.createElement('div');el.id='cloudNote';el.setAttribute('role','status');el.style.cssText='position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:99;max-width:min(520px,calc(100% - 32px));padding:12px 16px;border-radius:10px;font:600 15px "Barlow",sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.3)';document.body.append(el)}
+    el.textContent=t;el.style.background=err?'var(--stop,#b3261e)':'var(--ink,#0b1f3a)';el.style.color='#fff';el.hidden=false;clearTimeout(this._nt);this._nt=setTimeout(()=>el.hidden=true,err?8000:4000)},
+  redirect(){return location.origin+location.pathname},
+  async signIn(email,pw){const {error}=await this.client.auth.signInWithPassword({email,password:pw});if(error)throw error},
+  async signUp(email,pw,name){const {data,error}=await this.client.auth.signUp({email,password:pw,options:{data:{name},emailRedirectTo:this.redirect()}});if(error)throw error;
+    if(data.user&&Array.isArray(data.user.identities)&&!data.user.identities.length)throw new Error('already registered');return !!data.session},
+  async forgot(email){const {error}=await this.client.auth.resetPasswordForEmail(email,{redirectTo:this.redirect()});if(error)throw error},
+  async newPassword(pw){const {error}=await this.client.auth.updateUser({password:pw});if(error)throw error},
+  async signOut(){await this.q.catch(()=>{});try{await this.client.auth.signOut()}catch(e){}this.stop()},
+  stop(){this.on=false;this.user=null;this.lifts=[];this.fleet=[];this.urls={};this.synced={};delete ACCTS.me;
+    if(session==='me'){session=null;loadAcct();renderAcct();fillCranes($('crane').value);finder()}this.note('Je bent uitgelogd.')},
+  async start(user){
+    this.user=user;
+    const name=(user.user_metadata&&String(user.user_metadata.name||'').trim())||user.email.split('@')[0];
+    ACCTS.me={name,user:name,seats:1};
+    const {data,error}=await this.client.from('hlc_user_items').select('kind,item_id,data');
+    if(error)throw error;
+    this.lifts=data.filter(r=>r.kind==='lift').map(r=>r.data).filter(l=>l&&l.id);
+    this.lifts.forEach(l=>{l.team=l.team||{};l.photos=l.photos||[];l.sigs=l.sigs||{}});
+    const doc=(k,id)=>(data.find(r=>r.kind===k&&r.item_id===id)||{}).data;
+    this.fleet=(doc('fleet','main')||{}).list||[];
+    this.synced={};this.lifts.forEach(l=>this.synced[l.id]=JSON.stringify(l));
+    // eigen kranen samenvoegen (account + deze browser)
+    const cm=(doc('profile','mine')||{}).list||[];let changed=false;
+    for(const c of cm)if(c&&c.id&&!mine.some(x=>x.id===c.id)){mine.push(c);changed=true}
+    if(changed)try{localStorage.setItem(STORE,JSON.stringify(mine))}catch(e){}
+    if(mine.length>cm.length)this.put('profile','mine',{list:mine});
+    await this.sign(this.lifts);
+    this.on=true;session='me';
+    try{localStorage.removeItem('vluchtcheck-sessie')}catch(e){}
+    if($('loginDlg').open)$('loginDlg').close();
+    loadAcct();renderAcct();fillCranes();setHookDefault();fillConfig();finder();
+    if(typeof renderMine==='function')try{renderMine()}catch(e){}
+    this.note(`Ingelogd als ${name}. Je gegevens worden online bewaard.`);
+    if(!this.lifts.length)setTimeout(()=>this.offerImport(),400);
+  },
+  paths(l){return (l&&l.photos||[]).filter(u=>u&&typeof u==='object'&&u.p).map(u=>u.p)},
+  async sign(lifts){
+    const ps=[...new Set(lifts.flatMap(l=>this.paths(l)))].filter(p=>!this.urls[p]);
+    for(let i=0;i<ps.length;i+=100){const {data,error}=await this.client.storage.from('hlc-user-photos').createSignedUrls(ps.slice(i,i+100),6*3600);
+      if(!error&&data)data.forEach(d=>{if(d.signedUrl)this.urls[d.path]=d.signedUrl})}
+  },
+  async upload(dataUrl){
+    const blob=await (await fetch(dataUrl)).blob(),type=['image/png','image/webp'].includes(blob.type)?blob.type:'image/jpeg';
+    const rid=(crypto.randomUUID&&crypto.randomUUID())||(Date.now().toString(36)+Math.random().toString(36).slice(2,10));
+    const path=this.user.id+'/'+rid+({'image/png':'.png','image/webp':'.webp'}[type]||'.jpg');
+    const {error}=await this.client.storage.from('hlc-user-photos').upload(path,blob,{contentType:type,upsert:false});
+    if(error)throw error;this.urls[path]=dataUrl;return path;
+  },
+  run(fn){this.q=this.q.then(fn).catch(e=>this.note('Opslaan in je account is niet gelukt: '+this.msg(e)+' Je wijziging staat nog niet online.',true));return this.q},
+  put(kind,id,data){if(!this.on)return;const copy=JSON.parse(JSON.stringify(data));
+    this.run(async()=>{const {error}=await this.client.from('hlc_user_items').upsert({user_id:this.user.id,kind,item_id:id,data:copy,updated_at:new Date().toISOString()});if(error)throw error})},
+  syncLifts(list){if(!this.on)return;
+    this.run(async()=>{
+      let uploaded=false;
+      for(const l of list){const ph=l.photos||[];for(let i=0;i<ph.length;i++){const u=ph[i];if(typeof u==='string'&&u.startsWith('data:')){ph[i]={p:await this.upload(u)};uploaded=true}}}
+      const ids=new Set(list.map(l=>l.id)),ups=[],rm=[],dels=[];
+      for(const l of list){const js=JSON.stringify(l);if(this.synced[l.id]===js)continue;
+        const prev=this.synced[l.id]?this.paths(JSON.parse(this.synced[l.id])):[],now=new Set(this.paths(l));rm.push(...prev.filter(p=>!now.has(p)));
+        ups.push({user_id:this.user.id,kind:'lift',item_id:String(l.id).slice(0,80),data:l,updated_at:new Date().toISOString()})}
+      for(const id of Object.keys(this.synced))if(!ids.has(id)){dels.push(id);rm.push(...this.paths(JSON.parse(this.synced[id])))}
+      if(ups.length){const {error}=await this.client.from('hlc_user_items').upsert(ups);if(error)throw error}
+      if(dels.length){const {error}=await this.client.from('hlc_user_items').delete().eq('kind','lift').in('item_id',dels);if(error)throw error}
+      if(rm.length)await this.client.storage.from('hlc-user-photos').remove(rm);
+      ups.forEach(u=>this.synced[u.item_id]=JSON.stringify(u.data));dels.forEach(id=>delete this.synced[id]);
+      this.lifts=list.map(l=>JSON.parse(JSON.stringify(l)));
+      if(uploaded&&session==='me'&&typeof logs!=='undefined'&&logs===list)renderLog();
+    });
+  },
+  offerImport(){
+    if(!this.on||this.lifts.length)return;
+    const found={};
+    try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(!k||!k.startsWith('vluchtcheck-logboek-'))continue;
+      for(const l of (JSON.parse(localStorage.getItem(k))||[]))if(l&&l.id&&!String(l.id).startsWith('s'))found[l.id]=l}}catch(e){}
+    const list=Object.values(found);if(!list.length)return;
+    if(!confirm(`Er staan ${list.length} hijsen die je zelf hebt vastgelegd in deze browser. Wil je ze overzetten naar je account, zodat je ze overal ziet?`))return;
+    logs=list.map(l=>({...l,team:l.team||{},photos:l.photos||[],sigs:l.sigs||{}}));saveLog();renderLog();fillTeamNames();
+    this.note(`${list.length} hijsen worden overgezet naar je account…`);
+  },
+};
+const phSrc=u=>typeof u==='string'?u:(u&&u.p&&CLOUD.urls[u.p])||'';
+let accMode='in';
+function openLogin(mode,text,err){
+  const d=$('loginDlg');accSetMode(mode||'in');
+  const ok=CLOUD.ready;$('accBox').hidden=!ok;
+  $('accIntro').textContent=ok?'Met een eigen account bewaar je je hijsen, foto’s en kranen veilig online. Je ziet ze op elk apparaat waarop je inlogt.':'Inloggen met een eigen account is hier nu niet beschikbaar (geen verbinding met de database). Je kunt wel een demo-account openen.';
+  $('accDemo').open=!ok;
+  accSay(text||'',err);if(!d.open)d.showModal();
+}
+function accSay(t,err){$('accMsg').textContent=t;$('accMsg').className=err?'err':''}
+function accSetMode(m){accMode=m;
+  const up=m==='up',reset=m==='reset',forgot=m==='forgot';
+  $('loginH').textContent=up?'Account aanmaken':reset?'Nieuw wachtwoord':forgot?'Wachtwoord vergeten':'Inloggen';
+  $('accTabIn').setAttribute('aria-pressed',String(m==='in'));$('accTabUp').setAttribute('aria-pressed',String(up));
+  $('accNameRow').hidden=!up;$('accPwHint').hidden=!(up||reset);$('accPwRow').hidden=forgot;
+  $('accEmail').hidden=reset;$('accEmail').previousElementSibling.hidden=reset;
+  $('accPw').autocomplete=up||reset?'new-password':'current-password';
+  $('accSubmit').textContent=up?'Account aanmaken':reset?'Wachtwoord opslaan':forgot?'Stuur herstellink':'Inloggen';
+  $('accForgot').hidden=m!=='in';$('accDemo').hidden=reset;accSay('');
+}
+$('accTabIn').onclick=()=>accSetMode('in');
+$('accTabUp').onclick=()=>accSetMode('up');
+$('accForgot').onclick=()=>accSetMode('forgot');
+$('accForm').onsubmit=async e=>{
+  e.preventDefault();const b=$('accSubmit'),email=$('accEmail').value.trim(),pw=$('accPw').value,name=$('accName').value.trim();
+  if(accMode!=='reset'&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){accSay('Vul een geldig e-mailadres in.',true);$('accEmail').focus();return}
+  if(accMode==='up'&&!name){accSay('Vul je naam in.',true);$('accName').focus();return}
+  if(accMode!=='forgot'&&(accMode!=='in'?pw.length<8:!pw)){accSay(accMode==='in'?'Vul je wachtwoord in.':'Kies een wachtwoord van minimaal 8 tekens.',true);$('accPw').focus();return}
+  b.disabled=true;accSay('Even geduld…');
+  try{
+    if(accMode==='in'){await CLOUD.signIn(email,pw);$('accPw').value='';accSay('Ingelogd. Je gegevens worden geladen…')}
+    else if(accMode==='up'){const live=await CLOUD.signUp(email,pw,name);$('accPw').value='';
+      if(!live){accSetMode('in');$('accEmail').value=email;accSay(`Je account is aangemaakt. We hebben een bevestigingsmail gestuurd naar ${email}. Klik op de link in die mail; daarna ben je ingelogd. Geen mail? Kijk ook in je spam.`)}}
+    else if(accMode==='forgot'){await CLOUD.forgot(email);accSay(`Als er een account bestaat voor ${email}, staat er nu een mail met een herstellink in je inbox.`)}
+    else if(accMode==='reset'){await CLOUD.newPassword(pw);$('accPw').value='';$('loginDlg').close();CLOUD.note('Je nieuwe wachtwoord is opgeslagen.')}
+  }catch(err){accSay(CLOUD.msg(err),true)}finally{b.disabled=false}
+};
+
 /* ---------- hijslogboek ---------- */
 let logs=[];
 const LOGKEY=()=>'vluchtcheck-logboek-'+(session||'demo');
@@ -2621,8 +2797,8 @@ function seedLogs(){
     S(75,'Inhuur Kraanverhuur Zuid','d60',20,18,10,4.5,false,'','Jan de Vries','',''),
   ];
 }
-function loadLog(){logs=[];try{const x=localStorage.getItem(LOGKEY());if(x)logs=JSON.parse(x)||[]}catch(e){}if(!logs.length){logs=seedLogs();saveLog()}}
-function saveLog(){try{localStorage.setItem(LOGKEY(),JSON.stringify(logs))}catch(e){try{localStorage.setItem(LOGKEY(),JSON.stringify(logs.map(l=>({...l,sigs:{}}))))}catch(e2){}}}
+function loadLog(){logs=[];if(session==='me'){logs=CLOUD.lifts.map(l=>JSON.parse(JSON.stringify(l)));return}try{const x=localStorage.getItem(LOGKEY());if(x)logs=JSON.parse(x)||[]}catch(e){}if(!logs.length){logs=seedLogs();saveLog()}}
+function saveLog(){if(session==='me'){CLOUD.syncLifts(logs);return}try{localStorage.setItem(LOGKEY(),JSON.stringify(logs))}catch(e){try{localStorage.setItem(LOGKEY(),JSON.stringify(logs.map(l=>({...l,sigs:{}}))))}catch(e2){}}}
 const fmtD=x=>new Date(x+'T12:00').toLocaleDateString(LOC(),{day:'numeric',month:'short',year:'numeric'});
 const ROLE={lead:'Hijsleider',op:'Machinist',rig:'Aanslagman / rigger'};
 function people(){
@@ -2637,7 +2813,7 @@ const cl=id=>{const c=findC(id);return c?klasse(c):null};
 const shortCrane=id=>{const c=findC(id);return c?(klasse(c)?nf1.format(klasse(c))+' t':label(c)):id};
 function renderLog(){
   $('logLogin').hidden=true;$('logMain').hidden=false;
-  $('logLead').textContent=session!=='freelancer'?(session?`Alle hijsen van ${ACCTS.bedrijf.name}. Zie wie ervaring heeft met welke kraan en met kritische hijsen.`:'Alle hijsen van je team op één plek. Zie wie ervaring heeft met welke kraan en met kritische hijsen.'):'Je eigen hijsen als freelancer, handig als bewijs van je ervaring.';
+  $('logLead').textContent=session==='me'?`Het hijslogboek van ${ACCTS.me.name}. Je hijsen en foto’s staan veilig online in je account; alleen jij ziet ze.`:session!=='freelancer'?(session?`Alle hijsen van ${ACCTS.bedrijf.name}. Zie wie ervaring heeft met welke kraan en met kritische hijsen.`:'Alle hijsen van je team op één plek. Zie wie ervaring heeft met welke kraan en met kritische hijsen.'):'Je eigen hijsen als freelancer, handig als bewijs van je ervaring.';
   const ppl=people(),crit=logs.filter(l=>l.critical).length;
   $('logKpis').innerHTML=`<div class="kpi"><p>Hijsen</p><b>${logs.length}</b></div><div class="kpi"><p>Kritische hijsen</p><b>${crit}</b></div><div class="kpi"><p>Mensen</p><b>${ppl.length}</b></div><div class="kpi"><p>Laatste hijs</p><b style="font-size:24px">${logs.length?fmtD(logs.map(l=>l.date).sort().pop()):'–'}</b></div>`;
   qFillCranes();qRenderRig();qRenderThumbs();
@@ -2672,7 +2848,7 @@ function renderLogList(){
     <div class="lbody">
       <div class="lift-team"><div><span class="k">Machinist</span><b>${esc(l.team.op||'–')}</b></div><div><span class="k">Aanslagman / rigger</span><b>${esc(l.team.rig||'–')}</b></div></div>
       <div class="lsec"><div class="lsec-h"><span>Foto's</span><label class="btn sm secondary addph">Foto toevoegen<input type="file" accept="image/*" capture="environment" hidden data-addphoto="${esc(l.id)}"></label></div>
-        <div class="lift-photos">${ph.length?ph.map((u,i)=>`<button type="button" class="thumb" data-view="${esc(l.id)}" data-i="${i}" aria-label="Foto ${i+1} bekijken"><img src="${u}" alt=""></button>`).join(''):'<p class="note">Nog geen foto’s. Voeg foto’s toe van de last, de aanslagpunten en de opstelling.</p>'}</div></div>
+        <div class="lift-photos">${ph.length?ph.map((u,i)=>`<button type="button" class="thumb" data-view="${esc(l.id)}" data-i="${i}" aria-label="Foto ${i+1} bekijken"><img src="${esc(phSrc(u))}" alt=""></button>`).join(''):'<p class="note">Nog geen foto’s. Voeg foto’s toe van de last, de aanslagpunten en de opstelling.</p>'}</div></div>
       <div class="lsec"><div class="lsec-h"><span>Hijsmiddelen</span></div>${rg.length?`<ul class="rgl">${rg.map(x=>`<li><span class="badge">${x.n}×</span>${esc(x.name)}${x.kg?` <span class="note">(${nf1.format(x.kg)} kg)</span>`:''}</li>`).join('')}</ul>`:'<p class="note">Niet vastgelegd.</p>'}</div>
       <div class="lsec"><div class="lsec-h"><span>Afstanden en tonnage</span></div>
         <div class="nums">${tile('Vlucht',l.radius!=null?nf1.format(l.radius)+' m':'–')}${tile('Mastlengte',l.boom?nf1.format(l.boom)+' m':'–')}${tile('Ballast',nf1.format(l.ballast||0)+' t')}${tile('Gewicht aan de haak',f2.format(l.weight||0)+' t')}${l.net!=null?tile('Netto last',f2.format(l.net)+' t'):''}${tile('Maximaal toegestaan',l.cap!=null?nf1.format(l.cap)+' t':'–')}${tile('Benutting',l.pct!=null?l.pct+'%':'–')}</div></div>
@@ -2687,7 +2863,7 @@ function renderLogList(){
     l.photos=l.photos||[];
     for(const f of files){try{l.photos.push(await shrink(f))}catch(e){}}
     openLifts.add(l.id);
-    try{localStorage.setItem(LOGKEY(),JSON.stringify(logs))}catch(e){l.photos.splice(-files.length);alert(tr('Er is geen ruimte meer voor foto’s in deze browser. Verwijder eerst oude foto’s.'))}
+    if(session==='me')saveLog();else try{localStorage.setItem(LOGKEY(),JSON.stringify(logs))}catch(e){l.photos.splice(-files.length);alert(tr('Er is geen ruimte meer voor foto’s in deze browser. Verwijder eerst oude foto’s.'))}
     renderLog();
   });
   $('logList').querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>viewPhoto(b.dataset.view,+b.dataset.i));
@@ -2696,7 +2872,7 @@ function renderLogList(){
 function shrink(file){return new Promise((res,rej)=>{const u=URL.createObjectURL(file),im=new Image();im.onload=()=>{const m=900,k=Math.min(1,m/Math.max(im.width,im.height)),cv=document.createElement('canvas');cv.width=Math.round(im.width*k);cv.height=Math.round(im.height*k);cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);URL.revokeObjectURL(u);res(cv.toDataURL('image/jpeg',0.72))};im.onerror=()=>{URL.revokeObjectURL(u);rej()};im.src=u})}
 function viewPhoto(id,i){
   const l=logs.find(x=>x.id===id);if(!l||!l.photos||!l.photos[i])return;
-  const d=$('photoDlg');$('photoBig').src=l.photos[i];
+  const d=$('photoDlg');$('photoBig').src=phSrc(l.photos[i]);
   $('photoDel').onclick=()=>{if(!confirm(tr('Deze foto verwijderen?')))return;l.photos.splice(i,1);saveLog();d.close();renderLog()};
   d.showModal();
 }
@@ -2791,7 +2967,7 @@ $('qSave').onclick=()=>{
   if(!x.r||!x.w){msg.textContent=tr('Vul de vlucht en het gewicht aan de haak in.');(x.r?$('qWeight'):$('qRadius')).focus();return}
   const entry={id:'l'+Date.now(),date:$('qDate').value||new Date().toISOString().slice(0,10),project:$('qProject').value.trim(),loc:$('qLoc').value.trim(),craneId:x.c?x.c.id:'',craneLabel:x.c?label(x.c):'',boom:x.L,ballast:num($('qBallast').value)||0,radius:x.r,weight:x.w,cap:x.cap,pct:x.pct,critical:$('qCrit').checked,desc:'',team:{lead:'',op:$('qOp').value.trim(),rig:$('qRig').value.trim()},sigs:{},rig:qRig.map(y=>({...y})),net:null,hook:null,photos:qPhotos.slice()};
   logs.push(entry);
-  try{localStorage.setItem(LOGKEY(),JSON.stringify(logs))}catch(e){entry.photos=[];saveLog();alert(tr('Er is geen ruimte meer voor foto’s in deze browser. Verwijder eerst oude foto’s.'))}
+  if(session==='me')saveLog();else try{localStorage.setItem(LOGKEY(),JSON.stringify(logs))}catch(e){entry.photos=[];saveLog();alert(tr('Er is geen ruimte meer voor foto’s in deze browser. Verwijder eerst oude foto’s.'))}
   openLifts.add(entry.id);
   qPhotos=[];qRig=[];['qOp','qRig','qRadius','qWeight','qProject','qLoc'].forEach(id=>$(id).value='');$('qCrit').checked=false;delete $('qCrit').dataset.touched;$('qDate').value=new Date().toISOString().slice(0,10);
   qRenderThumbs();qRenderRig();qCap();fillTeamNames();renderLog();
@@ -3964,7 +4140,7 @@ function route(){
   closeMenu();
   window.scrollTo(0,0);
   if(id==='vlucht'&&shown)requestAnimationFrame(()=>draw(shown));
-  if(id==='wagenpark'&&!FLEET_LOCK&&!session){session='bedrijf';loadAcct();renderAcct();fillCranes($('crane').value)}
+  
   if(id==='kraan-toevoegen')renderMine();
   if(id==='hijsplan'){outrigger();renderCtx();renderPlan();sizeSigs();critHint()}
   if(id==='logboek')renderLog();
@@ -3982,6 +4158,7 @@ document.querySelectorAll('.tile[data-photo],.menu a[data-photo]').forEach(t=>t.
 
 initShips();
 loadAcct();renderAcct();
+CLOUD.init();
 fillCranes();
 try{loadLog();fillTeamNames()}catch(e){}
 setHookDefault();renderRig();update();finder();renderAdvice();route();
