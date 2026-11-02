@@ -8,11 +8,11 @@ const roleName=r=>({office:'Kantoor',rigger:'Rigger',operator:'Machinist'}[r]||r
 const person=id=>members.find(m=>m.user_id===id)?.name||'Medewerker';
 function message(e){return e?.message||'Verzoek niet gelukt. Controleer je verbinding en probeer opnieuw.'}
 async function action(button,fn){button.disabled=true;try{await fn()}catch(e){say(message(e))}finally{button.disabled=false}}
-function clearPrivate(){epoch++;user=null;member=null;current=null;projects=[];members=[];for(const id of ['lifts','assignments'])$(id).replaceChildren();for(const id of ['workspace','onboarding','office','logout'])$(id).hidden=true;$('identity').textContent='';$('newCode').value='';$('newCode').hidden=true}
+function clearPrivate(){epoch++;user=null;member=null;current=null;projects=[];members=[];for(const id of ['lifts','assignments'])$(id).replaceChildren();for(const id of ['workspace','onboarding','office','logout','openApp'])$(id).hidden=true;$('identity').textContent='';$('newCode').value='';$('newCode').hidden=true}
 async function session(){
   clearPrivate();user=check(await client.auth.getUser())?.user;
   if(!user){$('auth').hidden=false;return}
-  $('auth').hidden=true;$('logout').hidden=false;
+  $('auth').hidden=true;$('logout').hidden=false;$('openApp').hidden=false;
   member=check(await client.from('hlc_members').select('*').eq('user_id',user.id).maybeSingle());
   $('onboarding').hidden=!!member;
   if(!member){say('Maak een bedrijf aan of gebruik de uitnodigingscode van kantoor.');return}
@@ -79,6 +79,7 @@ $('invite').onclick=e=>action(e.target,async()=>{$('newCode').value=await rpc('h
 $('liftForm').onsubmit=e=>{e.preventDefault();action(e.submitter,async()=>{if(!current)throw new Error('Kies eerst een project.');await rpc('hlc_create_lift',{project:current.id,lift_description:$('description').value.trim(),crane_name:$('craneName').value.trim()});e.target.reset();await loadProject();say('Hijs opgeslagen. Voeg de foto toe bij de geregistreerde hijs.')})};
 $('project').onchange=()=>loadProject().catch(e=>say(message(e)));
 $('refresh').onclick=e=>action(e.target,async()=>{await refresh();say('Overzicht vernieuwd.')});
+if(new URLSearchParams(location.search).get('mode')==='signup'){$('authTitle').textContent='Account aanmaken';$('password').autocomplete='new-password';}
 try{
   let response=await fetch('/api/team-config');if(response.status===503||response.status===404)response=await fetch('./team-config.json');if(!response.ok)throw new Error('De online teamomgeving is nog niet aangesloten. De beheerder moet eerst de databasekoppeling activeren.');
   const {url,key}=await response.json();client=createClient(url,key,{auth:{storage:sessionStorage,storageKey:'hlc-team-auth',autoRefreshToken:true,persistSession:true,detectSessionInUrl:false}});
