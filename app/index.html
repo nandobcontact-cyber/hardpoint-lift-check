@@ -1096,6 +1096,14 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 <main class="screen" data-screen="ondergrond" hidden>
   <div class="wrap">
   <div class="screen-head"><a class="back" href="#/">← Start</a><h1>Steunpootdruk en ondergrond</h1><p>Gebaseerd op de kraan, de opstelling en de last uit Vlucht berekenen.</p><div class="ctx" data-ctx></div></div>
+    <section class="panel" aria-labelledby="groundPhotoTitle" style="margin-bottom:18px">
+<h2 id="groundPhotoTitle">Kraan herkennen</h2>
+<p class="note">Maak een foto van de kraan of kies een afbeelding. Bevestig het juiste model; de kraankeuze wordt ook bij Vlucht berekenen bijgewerkt. Steunpootkrachten en draagkracht worden niet uit de foto bepaald.</p>
+<div class="actions"><button class="btn secondary" type="button" id="groundCameraBtn">Foto maken</button><button class="btn secondary" type="button" id="groundGalleryBtn">Foto uit galerij</button></div>
+<input id="groundCamera" type="file" accept="image/*" capture="environment" hidden>
+<input id="groundGallery" type="file" accept="image/*" hidden>
+<div id="groundPhotoResult" role="status" aria-live="polite"></div>
+</section>
     <div class="panel">
           <div class="fgrid">
             <div class="fld"><label for="oGround">Ondergrond</label><select id="oGround"></select></div>
@@ -2314,11 +2322,11 @@ function applyOwnPhotoModel(k){
   $('addCameraBtn').onclick=()=>$('addCamera').click();
   $('addGalleryBtn').onclick=()=>$('addGallery').click();
   async function readOwnPhoto(input,target="own"){
-    const out=$(target==="fleet"?"fleetPhotoResult":"addPhotoResult");
+    const out=$(target==="ground"?"groundPhotoResult":target==="fleet"?"fleetPhotoResult":"addPhotoResult");
     const file=input.files[0];input.value='';if(!file||busy)return;
     if(!file.type.startsWith('image/')){out.textContent='Kies een foto.';return}
     if(file.size>20*1024*1024){out.textContent='Foto te groot. Kies een foto kleiner dan 20 MB.';return}
-    busy=true;['addCameraBtn','addGalleryBtn','fleetCameraBtn','fleetGalleryBtn'].forEach(id=>$(id).disabled=true);
+    busy=true;['addCameraBtn','addGalleryBtn','fleetCameraBtn','fleetGalleryBtn','groundCameraBtn','groundGalleryBtn'].forEach(id=>$(id).disabled=true);
     out.textContent='Kraan herkennen…';
     let worker=null;
     try{
@@ -2341,7 +2349,12 @@ function applyOwnPhotoModel(k){
         const b=document.createElement('button');b.type='button';b.className='btn secondary';
         b.textContent=k.merk+' '+k.type+' — gegevens overnemen';
         b.onclick=()=>{
-          if(target==='fleet'){
+          if(target==='ground'){
+            const c=anyC().find(c=>c.catalog&&c.merk===k.merk&&c.type===k.type);
+            if(!c){out.textContent='Dit model staat niet in de kraankeuze. Voeg het toe via Eigen kraan toevoegen.';return}
+            $('search').value='';fillCranes(c.id);$('crane').value=c.id;setHookDefault();fillConfig();outrigger();renderCtx();
+            out.textContent='Gekozen: '+k.merk+' '+k.type+'. Controleer de uitvoering en vul de opstelling en last in bij Vlucht berekenen.';
+          }else if(target==='fleet'){
             if(!session){out.textContent='Log eerst in om je wagenpark aan te vullen.';return}
             const c=anyC().find(c=>c.catalog&&c.merk===k.merk&&c.type===k.type);
             if(!c){out.textContent='Dit model staat niet in de wagenparklijst. Voeg het toe via Eigen kraan toevoegen.';return}
@@ -2352,7 +2365,7 @@ function applyOwnPhotoModel(k){
         out.appendChild(b);
       });
     }catch(e){out.textContent='Herkennen is niet gelukt. Probeer een andere foto of vul merk en type hieronder in.'}
-    finally{if(worker)await worker.terminate().catch(()=>{});busy=false;['addCameraBtn','addGalleryBtn','fleetCameraBtn','fleetGalleryBtn'].forEach(id=>$(id).disabled=false)}
+    finally{if(worker)await worker.terminate().catch(()=>{});busy=false;['addCameraBtn','addGalleryBtn','fleetCameraBtn','fleetGalleryBtn','groundCameraBtn','groundGalleryBtn'].forEach(id=>$(id).disabled=false)}
   }
   $('addCamera').onchange=()=>readOwnPhoto($('addCamera'));
   $('addGallery').onchange=()=>readOwnPhoto($('addGallery'));
@@ -2360,6 +2373,10 @@ function applyOwnPhotoModel(k){
   $('fleetGalleryBtn').onclick=()=>$('fleetGallery').click();
   $('fleetCamera').onchange=()=>readOwnPhoto($('fleetCamera'),'fleet');
   $('fleetGallery').onchange=()=>readOwnPhoto($('fleetGallery'),'fleet');
+  $('groundCameraBtn').onclick=()=>$('groundCamera').click();
+  $('groundGalleryBtn').onclick=()=>$('groundGallery').click();
+  $('groundCamera').onchange=()=>readOwnPhoto($('groundCamera'),'ground');
+  $('groundGallery').onchange=()=>readOwnPhoto($('groundGallery'),'ground');
 })();
 
 /* ---------- kraan herkennen op foto ---------- */
