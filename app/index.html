@@ -617,6 +617,13 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
   #hkTS{left:auto!important;right:6px;top:8px!important;transform:none}#hkTA{left:6px!important;top:8px!important;transform:none}
   #hkTS input{width:52px}}
 .flash{animation:flash 1.6s ease}@keyframes flash{0%,60%{box-shadow:0 0 0 3px var(--signal)}100%{box-shadow:0 0 0 0 transparent}}
+.cat-spec{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px 16px;margin:12px 0 4px}
+.cat-spec div{border-left:3px solid var(--line);padding-left:10px;min-width:0}
+.cat-spec dt{font-size:12px;color:var(--muted);font-weight:600}
+.cat-spec dd{margin:0;font:700 18px "Barlow Condensed",sans-serif;color:var(--ink);font-variant-numeric:tabular-nums}
+.cat-src{margin:6px 0 10px}
+.warn-y{color:var(--stop);font-weight:700}
+.pre-h{margin:22px 0 4px;font:700 20px "Barlow Condensed",sans-serif}
 </style>
 </head>
 <body>
@@ -1130,6 +1137,10 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
       <div><label for="aEigen">Eigen gewicht <span class="hint">(t, optioneel)</span></label><input id="aEigen" inputmode="decimal" placeholder="72"></div>
       <div><label for="aBase">Steunpootbasis <span class="hint">(m, lengte × breedte)</span></label><input id="aBase" placeholder="8,6 x 8,3"></div>
       <div><label for="aHook">Haakblok <span class="hint">(t, optioneel)</span></label><input id="aHook" inputmode="decimal" placeholder="2,5"></div>
+      <div><label for="aCfg">Configuratie</label><select id="aCfg"><option value="hoofd">Alleen hoofdmast</option><option value="jib">Hoofdmast met jib</option></select></div>
+      <div id="aJibLW" hidden><label for="aJibL">Jib-lengte (m)</label><input id="aJibL" inputmode="decimal" placeholder="16"></div>
+      <div id="aJibAW" hidden><label for="aJibA">Jib-hoek (°)</label><select id="aJibA"><option value="0">0°</option><option value="20">20°</option><option value="40">40°</option><option value="60">60°</option></select></div>
+      <div><label for="aSteun">Afstempeling</label><select id="aSteun"><option value="100">100% uitgeschoven</option><option value="75">75% uitgeschoven</option><option value="50">50% uitgeschoven</option><option value="0">Op banden (zonder steunpoten)</option></select></div>
     </div>
     <p class="note" id="catInfo" style="margin-top:10px;font-weight:600"></p>
     <div class="actions"><button class="btn secondary" type="button" id="makeGrid">Tabel klaarzetten</button></div>
@@ -1420,6 +1431,36 @@ const XT_SRC={
 'load # t, too heavy':['Last # t, zu schwer','charge # t, trop lourde','carga # t, demasiado pesada'],
 'load # t, OK':['Last # t, in Ordnung','charge # t, conforme','carga # t, correcto'],
 'Language':['Sprache','Langue','Idioma'],
+"Max. load":["Max. Last", "Charge max.", "Carga máx."],
+"Telescopic boom":["Teleskopausleger", "Flèche télescopique", "Pluma telescópica"],
+"Lattice jib":["Gitterspitze", "Fléchette treillis", "Plumín de celosía"],
+"Max. hoist height":["Max. Hubhöhe", "Hauteur de levage max.", "Altura de elevación máx."],
+"Max. radius":["Max. Ausladung", "Portée max.", "Radio máx."],
+"Total counterweight":["Gesamtballast", "Contrepoids total", "Contrapeso total"],
+"Axles":["Achsen", "Essieux", "Ejes"],
+"Drive engine":["Fahrmotor", "Moteur de translation", "Motor de traslación"],
+"Years built":["Baujahre", "Années de fabrication", "Años de fabricación"],
+"Source: Liebherr":["Quelle: Liebherr", "Source : Liebherr", "Fuente: Liebherr"],
+"Source: public data, check against the datasheet":["Quelle: öffentliche Daten, mit dem Datenblatt prüfen", "Source : données publiques, à vérifier avec la fiche technique", "Fuente: datos públicos, compruébalos con la ficha técnica"],
+"Years built are indicative":["Baujahre sind Richtwerte", "Années de fabrication indicatives", "Años de fabricación orientativos"],
+"Configuration":["Konfiguration", "Configuration", "Configuración"],
+"Main boom only":["Nur Hauptausleger", "Flèche principale seule", "Solo pluma principal"],
+"Main boom with jib":["Hauptausleger mit Spitze", "Flèche principale avec fléchette", "Pluma principal con plumín"],
+"Jib length (m)":["Spitzenlänge (m)", "Longueur de fléchette (m)", "Longitud del plumín (m)"],
+"Jib offset (°)":["Spitzenwinkel (°)", "Angle de fléchette (°)", "Ángulo del plumín (°)"],
+"Outrigger set-up":["Abstützung", "Calage", "Apoyo de estabilizadores"],
+"100% extended":["100 % ausgefahren", "Déployés à 100 %", "Extendidos al 100 %"],
+"75% extended":["75 % ausgefahren", "Déployés à 75 %", "Extendidos al 75 %"],
+"50% extended":["50 % ausgefahren", "Déployés à 50 %", "Extendidos al 50 %"],
+"On tyres (no outriggers)":["Auf Rädern (ohne Abstützung)", "Sur pneus (sans stabilisateurs)", "Sobre neumáticos (sin estabilizadores)"],
+"No load charts have been entered yet. Add your crane’s load chart to calculate exactly.":["Es sind noch keine Traglasttabellen eingegeben. Fügen Sie die Traglasttabelle Ihres Krans hinzu, um genau zu rechnen.", "Aucun abaque de charge n’a encore été saisi. Ajoutez l’abaque de votre grue pour calculer exactement.", "Aún no se han introducido tablas de cargas. Añade la tabla de cargas de tu grúa para calcular con exactitud."],
+"Pre-selection from the crane database":["Vorauswahl aus der Krandatenbank", "Présélection dans la base de grues", "Preselección de la base de grúas"],
+"These cranes reach the radius and the load on paper (maximum radius and maximum load). That says nothing yet about what they may lift at your radius: add the load chart to calculate exactly.":["Diese Krane erreichen Ausladung und Last auf dem Papier (maximale Ausladung und maximale Last). Das sagt noch nichts darüber, was sie bei Ihrer Ausladung heben dürfen: Fügen Sie die Traglasttabelle hinzu, um genau zu rechnen.", "Ces grues atteignent la portée et la charge sur le papier (portée maximale et charge maximale). Cela ne dit encore rien de ce qu’elles peuvent lever à votre portée : ajoutez l’abaque pour calculer exactement.", "Estas grúas alcanzan el radio y la carga sobre el papel (radio máximo y carga máxima). Eso aún no dice nada de lo que pueden izar a tu radio: añade la tabla de cargas para calcular con exactitud."],
+"unknown":["unbekannt", "inconnues", "desconocidos"],
+"present":["heute", "aujourd’hui", "actualidad"],
+"Enter the jib length.":["Geben Sie die Spitzenlänge ein.", "Saisissez la longueur de la fléchette.", "Introduce la longitud del plumín."],
+"Year # is outside the production years of this type. Check the type on the type plate.":["Baujahr # liegt außerhalb der Baujahre dieses Typs. Prüfen Sie den Typ auf dem Typenschild.", "L’année # est en dehors des années de fabrication de ce type. Vérifiez le type sur la plaque signalétique.", "El año # está fuera de los años de fabricación de este tipo. Comprueba el tipo en la placa de características."],
+"Jib according to the database: up to # m.":["Spitze laut Datenbank: bis # m.", "Fléchette selon la base : jusqu’à # m.", "Plumín según la base de datos: hasta # m."],
 'lifting capacity at a glance':['Hubkraft auf einen Blick','la capacité de levage en un coup d’œil','capacidad de izado de un vistazo']
 };
 
@@ -1456,34 +1497,66 @@ function demo(id,naam,jaar,C,booms,ballasts,spec){
   });
   return {id,merk:'Voorbeeld',type:naam,jaar,custom:false,charts,spec:{klasse:C,...spec}};
 }
-const DEMO=[
-  demo('d40','Demo-kraan 40 t',2019,40,[9.6,14,19,25,31,35],[0,4,8],{eigen:24,a:5.6,b:5.9,cw:3.0,hook:0.5}),
-  demo('d60','Demo-kraan 60 t',2016,60,[10.5,15,20,26,32,40],[0,6,12,18],{eigen:36,a:6.0,b:6.6,cw:3.6,hook:0.8}),
-  demo('d100','Demo-kraan 100 t',2018,100,[11.6,18,25,32,40,48],[0,10,20,30],{eigen:48,a:7.0,b:7.0,cw:4.2,hook:1.2}),
-  demo('d160','Demo-kraan 160 t',2021,160,[12.8,20,28,36,44,52,60],[0,15,30,45],{eigen:60,a:7.8,b:7.6,cw:4.6,hook:1.8}),
-  demo('d300','Demo-kraan 300 t',2020,300,[15.2,22,30,40,50,60,70],[0,22,45,67,90],{eigen:72,a:8.6,b:8.3,cw:5.0,hook:2.6}),
-  demo('d500','Demo-kraan 500 t',2022,500,[16,25,35,45,55,65,75,84],[0,40,80,125,165],{eigen:96,a:10,b:9.6,cw:5.8,hook:4.2})
-];
-const CATALOG=[{id:'c0',merk:'Liebherr',type:'LTM 1050-3.1',klasse:50,assen:3},{id:'c1',merk:'Liebherr',type:'LTM 1060-3.1',klasse:60,assen:3},{id:'c2',merk:'Liebherr',type:'LTM 1070-4.2',klasse:70,assen:4},{id:'c3',merk:'Liebherr',type:'LTM 1090-4.2',klasse:90,assen:4},{id:'c4',merk:'Liebherr',type:'LTM 1100-4.2',klasse:100,assen:4},{id:'c5',merk:'Liebherr',type:'LTM 1110-5.1',klasse:110,assen:5},{id:'c6',merk:'Liebherr',type:'LTM 1120-4.1',klasse:120,assen:4},{id:'c7',merk:'Liebherr',type:'LTM 1150-5.3',klasse:150,assen:5},{id:'c8',merk:'Liebherr',type:'LTM 1160-5.2',klasse:180,assen:5},{id:'c9',merk:'Liebherr',type:'LTM 1200-5.1',klasse:200,assen:5},{id:'c10',merk:'Liebherr',type:'LTM 1230-5.1',klasse:230,assen:5},{id:'c11',merk:'Liebherr',type:'LTM 1250-5.1',klasse:250,assen:5},{id:'c12',merk:'Liebherr',type:'LTM 1300-6.2',klasse:300,assen:6},{id:'c13',merk:'Liebherr',type:'LTM 1350-6.1',klasse:350,assen:6},{id:'c14',merk:'Liebherr',type:'LTM 1450-8.1',klasse:450,assen:8},{id:'c15',merk:'Liebherr',type:'LTM 1500-8.1',klasse:500,assen:8},{id:'c16',merk:'Tadano',type:'AC 3.045-1',klasse:45,assen:3},{id:'c17',merk:'Tadano',type:'AC 3.055-1',klasse:55,assen:3},{id:'c18',merk:'Tadano',type:'AC 4.070-1',klasse:70,assen:4},{id:'c19',merk:'Tadano',type:'AC 4.080-1',klasse:80,assen:4},{id:'c20',merk:'Tadano',type:'AC 4.100L-1',klasse:100,assen:4},{id:'c21',merk:'Tadano',type:'AC 5.120-1',klasse:120,assen:5},{id:'c22',merk:'Tadano',type:'AC 5.220-1',klasse:220,assen:5},{id:'c23',merk:'Tadano',type:'AC 5.250-1',klasse:250,assen:5},{id:'c24',merk:'Tadano',type:'AC 6.300-1',klasse:300,assen:6},{id:'c25',merk:'Tadano',type:'AC 7.450-1',klasse:450,assen:7},{id:'c26',merk:'Grove',type:'GMK3060L',klasse:60,assen:3},{id:'c27',merk:'Grove',type:'GMK4080L',klasse:80,assen:4},{id:'c28',merk:'Grove',type:'GMK4100L',klasse:100,assen:4},{id:'c29',merk:'Grove',type:'GMK5120L',klasse:120,assen:5},{id:'c30',merk:'Grove',type:'GMK5150L',klasse:150,assen:5},{id:'c31',merk:'Grove',type:'GMK5250L',klasse:250,assen:5},{id:'c32',merk:'Grove',type:'GMK6300L',klasse:300,assen:6},{id:'c33',merk:'Grove',type:'GMK6400',klasse:400,assen:6}];
+const DEMO=[];  /* geen voorbeeldkranen meer: alleen echte kranen uit de database en eigen lasttabellen */
+/* Liebherr LTM 60–450 t. bron 'L' = Liebherr-productpagina (liebherr.com), 'D' = openbare gegevens van derden (controleren met datasheet).
+   j: [eerste bouwjaar, laatste bouwjaar of null = nog in productie]; jz: true = jaartal bevestigd, anders indicatief.
+   last: max. last in t op radius lr (m); mast: telescoopmast [min,max] m; jib: lattice jib [min,max] m; h: max. hijshoogte m; v: max. vlucht m; bal: totale ballast t. */
+const LIEBHERR=[
+ {id:'l1060-31',type:'LTM 1060-3.1',klasse:60,last:60,lr:2.1,assen:3,mast:[10.3,48],jib:[2.5,16],h:63,v:48,bal:12.8,kw:270,dr:'6x4x6 (optie 6x6x6)',j:[2013,null],jz:false,b:'L'},
+ {id:'l1070-41',type:'LTM 1070-4.1',klasse:70,last:70,assen:4,mast:[null,50],jib:[9.5,16],bal:14.5,j:[2004,2008],jz:false,b:'D'},
+ {id:'l1070-42',type:'LTM 1070-4.2',klasse:70,last:70,lr:2.5,assen:4,mast:[11,50],jib:[3.2,16],h:65,v:48,bal:14.5,kw:330,dr:'8x4x8 (optie 8x6x8)',j:[2009,null],jz:false,b:'L'},
+ {id:'l1090-41',type:'LTM 1090-4.1',klasse:90,last:90,assen:4,mast:[null,50],j:[2004,2017],jz:false,b:'D'},
+ {id:'l1090-42',type:'LTM 1090-4.2',klasse:90,last:90,lr:3,assen:4,mast:[11.4,60],jib:[2,16],h:76,v:62,bal:22.5,kw:330,dr:'8x6x8',j:[2014,2026],jz:false,b:'L'},
+ {id:'l1090-43',type:'LTM 1090-4.3',klasse:90,last:90,lr:3,assen:4,mast:[11.4,60],jib:[2,16],h:76,v:62,bal:22.5,kw:330,dr:'8x6x8',j:[2026,null],jz:true,b:'L'},
+ {id:'l1095-51',type:'LTM 1095-5.1',klasse:95,last:95,assen:5,mast:[12.8,58],jib:[10.5,19],h:82,v:62,j:[null,null],jz:false,b:'D'},
+ {id:'l1100-42',type:'LTM 1100-4.2',klasse:100,last:100,lr:3,assen:4,mast:[11.5,60],kw:350,dr:'8x6x8 (optie 8x8x8)',j:[null,null],jz:false,b:'D'},
+ {id:'l1100-52',type:'LTM 1100-5.2',klasse:100,last:100,lr:2.7,assen:5,mast:[11.5,52],jib:[10.8,33],bal:35,kw:370,dr:'10x6x10 (optie 10x8x10)',j:[null,null],jz:false,b:'D'},
+ {id:'l1100-53',type:'LTM 1100-5.3',klasse:100,last:100,lr:3,assen:5,mast:[13,62],jib:[2,16],h:76,v:64,bal:22.5,kw:400,dr:'10x6x10 (optie 10x8x10)',j:[2022,null],jz:true,b:'L'},
+ {id:'l1110-51',type:'LTM 1110-5.1',klasse:110,last:110,assen:5,mast:[null,60],jib:[10.8,19],j:[2013,2019],jz:false,b:'D'},
+ {id:'l1110-52',type:'LTM 1110-5.2',klasse:110,last:110,lr:3,assen:5,mast:[11.5,60],jib:[2.9,33],h:91,v:66,bal:29,kw:400,dr:'10x6x10 (optie 10x8x10)',j:[2019,null],jz:true,b:'L'},
+ {id:'l1120-41',type:'LTM 1120-4.1',klasse:120,last:120,lr:3,assen:4,mast:[12.3,66],jib:[2.9,26],h:91,v:64,bal:31,kw:330,dr:'8x6x8',j:[2020,null],jz:true,b:'L'},
+ {id:'l1130-51',type:'LTM 1130-5.1',klasse:130,last:130,assen:5,mast:[null,60],jib:[10.7,33],h:91,v:72,bal:42,j:[2007,null],jz:true,b:'D'},
+ {id:'l1150-53',type:'LTM 1150-5.3',klasse:150,last:150,lr:3,assen:5,mast:[12.3,66],jib:[2.9,26],h:92,v:72,bal:45,kw:400,dr:'10x6x10 (optie 10x8x10)',j:[2018,null],jz:false,b:'L'},
+ {id:'l1160-51',type:'LTM 1160-5.1',klasse:160,last:160,assen:5,mast:[null,62],jib:[null,43],bal:46.5,j:[null,2014],jz:false,b:'D'},
+ {id:'l1160-52',type:'LTM 1160-5.2',klasse:180,last:180,lr:2.5,assen:5,mast:[13.1,62],jib:[2.9,40],h:99,v:78,bal:54,kw:400,dr:'10x6x10 (optie 10x8x10)',j:[2014,null],jz:true,b:'L'},
+ {id:'l1200-51',type:'LTM 1200-5.1',klasse:200,last:200,lr:3,assen:5,mast:[13.2,72],jib:[5.4,36],h:101,v:82,bal:72,kw:370,dr:'10x6x10 (optie 10x8x10)',j:[2006,2019],jz:false,b:'D'},
+ {id:'l1220-52',type:'LTM 1220-5.2',klasse:220,last:220,assen:5,mast:[null,60],jib:[12.2,22],h:101,v:88,bal:74,j:[null,2019],jz:false,b:'D'},
+ {id:'l1230-51',type:'LTM 1230-5.1',klasse:230,last:230,lr:3,assen:5,mast:[12.7,75],jib:[3.4,43],h:111,v:86,bal:72,kw:400,dr:'10x6x10 (optie 10x8x10)',j:[2019,null],jz:true,b:'L'},
+ {id:'l1250-51',type:'LTM 1250-5.1',klasse:250,last:250,lr:3,assen:5,mast:[13.1,60],jib:[5.4,50],h:108,v:96,bal:88,kw:400,dr:'10x6x10 (optie 10x8x10)',j:[2013,null],jz:false,b:'L'},
+ {id:'l1250-61',type:'LTM 1250-6.1',klasse:250,last:250,assen:6,mast:[null,72],bal:97.5,j:[null,null],jz:false,b:'D'},
+ {id:'l1300-62',type:'LTM 1300-6.2',klasse:300,last:300,lr:3,assen:6,mast:[14.7,78],bal:96,j:[2013,2022],jz:false,b:'D'},
+ {id:'l1300-63',type:'LTM 1300-6.3',klasse:300,last:300,lr:3,assen:6,mast:[14.7,90],jib:[4,43],h:120,v:94,bal:88,kw:455,dr:'12x6x12 (optie 12x8x12)',j:[2022,2025],jz:false,b:'L'},
+ {id:'l1300-64',type:'LTM 1300-6.4',klasse:300,last:300,lr:3,assen:6,mast:[14.7,90],jib:[4,43],h:120,v:94,bal:88,kw:455,dr:'12x6x12 (optie 12x8x12)',j:[2026,null],jz:false,b:'L'},
+ {id:'l1350-61',type:'LTM 1350-6.1',klasse:350,last:350,lr:3,assen:6,mast:[14.9,70],jib:[null,78],h:134,v:96,j:[2010,2022],jz:false,b:'D'},
+ {id:'l1400-71',type:'LTM 1400-7.1',klasse:400,last:400,assen:7,mast:[15.5,60],j:[2005,2022],jz:false,b:'D'},
+ {id:'l1400-61',type:'LTM 1400-6.1',klasse:450,last:450,lr:3,assen:6,mast:[14.8,70],jib:[7,80.5],h:120,v:97,bal:140,kw:455,dr:'12x6x12 (optie 12x8x12)',j:[2025,null],jz:false,b:'L'}
+].map(k=>({merk:'Liebherr',...k}));
+
+const CATALOG=LIEBHERR.concat([{id:'c16',merk:'Tadano',type:'AC 3.045-1',klasse:45,assen:3},{id:'c17',merk:'Tadano',type:'AC 3.055-1',klasse:55,assen:3},{id:'c18',merk:'Tadano',type:'AC 4.070-1',klasse:70,assen:4},{id:'c19',merk:'Tadano',type:'AC 4.080-1',klasse:80,assen:4},{id:'c20',merk:'Tadano',type:'AC 4.100L-1',klasse:100,assen:4},{id:'c21',merk:'Tadano',type:'AC 5.120-1',klasse:120,assen:5},{id:'c22',merk:'Tadano',type:'AC 5.220-1',klasse:220,assen:5},{id:'c23',merk:'Tadano',type:'AC 5.250-1',klasse:250,assen:5},{id:'c24',merk:'Tadano',type:'AC 6.300-1',klasse:300,assen:6},{id:'c25',merk:'Tadano',type:'AC 7.450-1',klasse:450,assen:7},{id:'c26',merk:'Grove',type:'GMK3060L',klasse:60,assen:3},{id:'c27',merk:'Grove',type:'GMK4080L',klasse:80,assen:4},{id:'c28',merk:'Grove',type:'GMK4100L',klasse:100,assen:4},{id:'c29',merk:'Grove',type:'GMK5120L',klasse:120,assen:5},{id:'c30',merk:'Grove',type:'GMK5150L',klasse:150,assen:5},{id:'c31',merk:'Grove',type:'GMK5250L',klasse:250,assen:5},{id:'c32',merk:'Grove',type:'GMK6300L',klasse:300,assen:6},{id:'c33',merk:'Grove',type:'GMK6400',klasse:400,assen:6}]);
 const catLabel=k=>`${k.merk} ${k.type}`;
 const variantsOf=k=>mine.filter(c=>c.merk.toLowerCase()===k.merk.toLowerCase()&&c.type.toLowerCase()===k.type.toLowerCase());
 let mine=[];
 try{const s=localStorage.getItem(STORE);if(s)mine=JSON.parse(s)||[]}catch(e){mine=[]}
 const saveMine=()=>{try{localStorage.setItem(STORE,JSON.stringify(mine))}catch(e){}};
-const all=()=>DEMO.concat(mine);
-const label=c=>c.custom?`${c.merk} ${c.type} (${c.jaar})`:`${c.type} (${c.jaar})`;
+const all=()=>mine;
+const CATC=CATALOG.map(k=>({id:'cat:'+k.id,merk:k.merk,type:k.type,jaar:null,custom:false,catalog:k,charts:{},spec:{klasse:k.klasse}}));
+const anyC=()=>mine.concat(CATC);
+const findC=id=>anyC().find(c=>c.id===id);
+const cfgKey=g=>g?`${g.jib?'j'+g.jib.L+'-'+g.jib.a:''}s${g.steun??100}`:'s100';
+const cfgSuffix=c=>{const g=c.cfg;if(!g)return '';let t='';if(g.jib)t+=` · jib ${nf1.format(g.jib.L)} m ${g.jib.a}°`;if(g.steun!=null&&g.steun!==100)t+=` · ${g.steun}%`;return t};
+const label=c=>c.catalog?`${c.merk} ${c.type}`:c.custom?`${c.merk} ${c.type} (${c.jaar})${cfgSuffix(c)}`:`${c.type} (${c.jaar})`;
 let mode='load';
 
 /* ---------- keuzes ---------- */
 function fillCranes(keep){
   const q=$('search').value.trim().toLowerCase(),sel=$('crane');sel.innerHTML='';let first=null;
-  const fl=session?fleet.map(f=>({f,c:all().find(c=>c.id===f.craneId)})).filter(x=>x.c&&(!q||(x.f.num+' '+label(x.c)).toLowerCase().includes(q))):[];
+  const fl=session?fleet.map(f=>({f,c:findC(f.craneId)})).filter(x=>x.c&&(!q||(x.f.num+' '+label(x.c)).toLowerCase().includes(q))):[];
   if(fl.length){
     const og=document.createElement('optgroup');og.label=session==='bedrijf'?'Ons wagenpark':'Mijn favorieten';
     fl.forEach(({f,c})=>{const o=document.createElement('option');o.value=c.id;o.textContent=`${f.num} · ${label(c)}`;og.appendChild(o);if(!first)first=c.id});
     sel.appendChild(og);
   }
-  [['Voorbeeldkranen',DEMO],['Zelf ingevoerd',mine]].forEach(([g,list])=>{
+  [['Zelf ingevoerd',mine]].forEach(([g,list])=>{
     const items=list.filter(c=>!q||label(c).toLowerCase().includes(q));if(!items.length)return;
     const og=document.createElement('optgroup');og.label=g;
     items.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=label(c);og.appendChild(o);if(!first)first=c.id});
@@ -1491,14 +1564,13 @@ function fillCranes(keep){
   });
   {const items=CATALOG.filter(k=>!q||(catLabel(k)+' '+k.klasse+' t').toLowerCase().includes(q));
    if(items.length){const og=document.createElement('optgroup');og.label='Kranendatabase · lasttabel toevoegen';
-     items.forEach(k=>{const n=variantsOf(k).length,o=document.createElement('option');o.value='cat:'+k.id;o.textContent=`${catLabel(k)} · ${k.klasse} t${n?` · ander bouwjaar toevoegen`:''}`;og.appendChild(o);if(!first)first=o.value});
+     items.forEach(k=>{const n=variantsOf(k).length,o=document.createElement('option');o.value='cat:'+k.id;o.textContent=`${catLabel(k)}${k.j&&(k.j[0]||k.j[1])?` (${k.j[0]||'…'}–${k.j[1]||'…'})`:''} · ${k.klasse} t${n?` · ander bouwjaar toevoegen`:''}`;og.appendChild(o);if(!first)first=o.value});
      sel.appendChild(og)}}
   if(!first){const o=document.createElement('option');o.textContent='Geen kraan gevonden';o.value='';sel.appendChild(o)}
   if(keep&&[...sel.options].some(o=>o.value===keep))sel.value=keep;
-  else if(!keep&&[...sel.options].some(o=>o.value==='d300'))sel.value='d300';
   fillConfig();
 }
-const crane=()=>all().find(c=>c.id===$('crane').value);
+const crane=()=>findC($('crane').value);
 function fillConfig(){
   const c=crane(),bs=$('ballast'),prev=bs.value;bs.innerHTML='';
   if(c)Object.keys(c.charts).map(Number).sort((a,b)=>b-a).forEach(b=>{const o=document.createElement('option');o.value=b;o.textContent=nf1.format(b)+' t';bs.appendChild(o)});
@@ -1732,6 +1804,10 @@ function draw(o){
 
 /* ---------- bijwerken ---------- */
 function update(){updateMain();outrigger();renderCtx();renderPlan();}
+function yrs(k){const [a,b]=k.j||[];if(!a&&!b)return T2('onbekend','unknown');return `${a||'?'} – ${b||T2('heden','present')}`}
+function catSpec(k){if(!k||k.last==null)return '<br>';const f=v=>v==null?'–':nf1.format(v),rng=x=>x&&(x[0]!=null||x[1]!=null)?`${x[0]!=null?f(x[0])+' – ':'≤ '}${f(x[1])} m`:'–';
+  const rows=[['Max. last',`${f(k.last)} t${k.lr?` · ${f(k.lr)} m`:''}`],['Telescoopmast',rng(k.mast)],['Lattice jib',rng(k.jib)],['Max. hijshoogte',k.h?f(k.h)+' m':'–'],['Max. vlucht',k.v?f(k.v)+' m':'–'],['Totale ballast',k.bal?f(k.bal)+' t':'–'],['Assen',String(k.assen||'–')],['Rijmotor',k.kw?k.kw+' kW':'–'],['Bouwjaren',yrs(k)]];
+  return `<dl class="cat-spec">${rows.map(([a,b])=>`<div><dt>${a}</dt><dd>${b}</dd></div>`).join('')}</dl><p class="note cat-src"><span>${k.b==='L'?'Bron: Liebherr':'Bron: openbare gegevens, controleer met het datasheet'}</span>${k.jz?'':' · <span>Bouwjaren indicatief</span>'}</p>`}
 function renderCtx(){
   const c=crane(),w=num($('weight').value);
   const html=c?`<span class="chip">${esc(label(c))}</span><span class="chip">${nf1.format(num($('boom').value)||0)} m mast</span><span class="chip">${nf1.format(num($('ballast').value)||0)} t ballast</span><span class="chip">${num($('radius').value)?nf1.format(num($('radius').value))+' m vlucht':'geen vlucht'}</span><span class="chip">${w?nf1.format(w)+' t aan de haak':'geen last'}</span><a href="#/vlucht">Wijzigen</a>`:'<a href="#/vlucht">Kies eerst een kraan</a>';
@@ -1746,9 +1822,9 @@ function updateMain(){
   $('radiusLbl').textContent=mode==='reach'?'Maximale vlucht':'Vlucht';
   $('bigLbl').textContent=mode==='reach'?'Maximale vlucht':'Maximaal toegestaan';
   const cv=$('crane').value;
-  if(!c&&cv.startsWith('cat:')){const k=CATALOG.find(x=>'cat:'+x.id===cv);big.textContent='–';
+  if(cv.startsWith('cat:')){const k=CATALOG.find(x=>'cat:'+x.id===cv);big.textContent='–';
     const vs=k?variantsOf(k):[];
-    sub.innerHTML=`<b>${esc(catLabel(k))}</b> (${k.klasse} t, ${k.assen} assen) staat in de database, maar er is nog geen lasttabel voor. Lasttabellen verschillen per bouwjaar, dus voeg de tabel toe uit het boekje van jouw kraan.${vs.length?` Al ingevoerd: ${vs.map(v=>v.jaar).sort().join(', ')}.`:''}<br><button class="btn sm" type="button" id="catAdd" style="margin-top:10px">Lasttabel toevoegen</button>`;
+    sub.innerHTML=`<b>${esc(catLabel(k))}</b> (${k.klasse} t, ${k.assen} assen) staat in de database, maar er is nog geen lasttabel voor. Lasttabellen verschillen per bouwjaar, dus voeg de tabel toe uit het boekje van jouw kraan.${vs.length?` Al ingevoerd: ${vs.map(v=>v.jaar).sort().join(', ')}.`:''}${catSpec(k)}<button class="btn sm" type="button" id="catAdd" style="margin-top:10px">Lasttabel toevoegen</button>`;
     $('catAdd').onclick=()=>openAddFor(k);
     $('tableWrap').innerHTML='';target={...base,r:base.L*0.5};animate();return}
   if(!c||!ch||j<0){big.textContent='–';sub.textContent='Kies een kraan om te beginnen.';$('tableWrap').innerHTML='';target={...base,r:base.L*0.5};animate();return}
@@ -1839,7 +1915,11 @@ function catMatch(){const m=$('aMerk').value.trim().toLowerCase(),t=$('aType').v
 function catInfo(){const k=catMatch(),el=$('catInfo');if(!k){el.textContent='';return}
   if(!$('aMerk').value.trim())$('aMerk').value=k.merk;
   if(!$('aKlasse').value)$('aKlasse').value=k.klasse;
-  const vs=variantsOf(k);el.textContent=`${catLabel(k)} staat in de kranendatabase (${k.klasse} t, ${k.assen} assen).${vs.length?` Al ingevoerd voor bouwjaar ${vs.map(v=>v.jaar).sort().join(', ')}. Een ander bouwjaar wordt als nieuwe versie opgeslagen.`:''}`}
+  const vs=variantsOf(k),jr=parseInt($('aJaar').value,10),[y0,y1]=k.j||[];
+  const off=jr&&((y0&&jr<y0)||(y1&&jr>y1));
+  el.innerHTML=`<span>${esc(`${catLabel(k)} staat in de kranendatabase (${k.klasse} t, ${k.assen} assen).${vs.length?` Al ingevoerd voor bouwjaar ${vs.map(v=>v.jaar).sort().join(', ')}. Een ander bouwjaar wordt als nieuwe versie opgeslagen.`:''}`)}</span>${k.j&&(y0||y1)?`<br><span>${T2('Bouwjaren','Years built')}: ${esc(yrs(k))}</span>`:''}${off?`<br><span class="warn-y">${T2(`Bouwjaar ${jr} valt buiten de productiejaren van dit type. Controleer het type op de typeplaat.`,`Year ${jr} is outside the production years of this type. Check the type on the type plate.`)}</span>`:''}${k.jib&&k.jib[1]?`<br><span>${T2(`Jib volgens de database: tot ${nf1.format(k.jib[1])} m.`,`Jib according to the database: up to ${nf1.format(k.jib[1])} m.`)}</span>`:''}`}
+$('aJaar').addEventListener('input',catInfo);
+$('aCfg').addEventListener('change',()=>{const j=$('aCfg').value==='jib';$('aJibLW').hidden=!j;$('aJibAW').hidden=!j});
 $('aMerk').addEventListener('input',()=>{fillCatLists();catInfo()});$('aType').addEventListener('input',catInfo);$('aType').addEventListener('change',catInfo);
 function openAddFor(k){go('kraan-toevoegen');$('aMerk').value=k.merk;$('aType').value=k.type;$('aKlasse').value=k.klasse;$('aJaar').value='';fillCatLists();catInfo();setTimeout(()=>$('aJaar').focus(),60)}
 fillCatLists();
@@ -1850,8 +1930,11 @@ $('saveCrane').onclick=()=>{
   const values=draft.radii.map(()=>draft.booms.map(()=>null));let count=0;
   $('gridWrap').querySelectorAll('input').forEach(inp=>{const v=num(inp.value);if(v!=null&&v>0){values[+inp.dataset.i][+inp.dataset.j]=v;count++}});
   if(!count){$('addMsg').textContent='Vul minstens één waarde in de tabel in.';return}
-  let c=mine.find(x=>x.merk.toLowerCase()===merk.toLowerCase()&&x.type.toLowerCase()===type.toLowerCase()&&x.jaar===jaar);
-  if(!c){const k=catMatch();c={id:'m'+Date.now(),merk:k?k.merk:merk,type:k?k.type:type,jaar,custom:true,charts:{},catId:k?k.id:null};mine.push(c)}
+  const jib=$('aCfg').value==='jib'?{L:num($('aJibL').value),a:+$('aJibA').value}:null;
+  if(jib&&!(jib.L>0)){$('addMsg').textContent=T2('Vul de jib-lengte in.','Enter the jib length.');$('aJibL').focus();return}
+  const cfg={jib,steun:+$('aSteun').value};
+  let c=mine.find(x=>x.merk.toLowerCase()===merk.toLowerCase()&&x.type.toLowerCase()===type.toLowerCase()&&x.jaar===jaar&&cfgKey(x.cfg)===cfgKey(cfg));
+  if(!c){const k=catMatch();c={id:'m'+Date.now(),merk:k?k.merk:merk,type:k?k.type:type,jaar,cfg,custom:true,charts:{},catId:k?k.id:null};mine.push(c)}
   const eig=num($('aEigen').value),hk=num($('aHook').value),kl=num($('aKlasse').value),bs=($('aBase').value.match(/\d+(?:[.,]\d+)?/g)||[]).map(num);
   c.spec={cw:4.5,...(c.spec||{})};
   if(eig)c.spec.eigen=eig; if(hk!=null)c.spec.hook=hk; if(kl)c.spec.klasse=kl; if(bs.length>=2){c.spec.a=bs[0];c.spec.b=bs[1]}
@@ -1863,7 +1946,7 @@ $('saveCrane').onclick=()=>{
 function renderMine(){
   if(!mine.length){$('mineWrap').innerHTML='<p class="note" style="margin-top:16px">Je hebt nog geen eigen kranen. Ze worden voorlopig alleen in deze browser bewaard.</p>';return}
   const groups={};mine.slice().sort((a,b)=>(a.merk+a.type).localeCompare(b.merk+b.type)||a.jaar-b.jaar).forEach(c=>{(groups[c.merk+' '+c.type]=groups[c.merk+' '+c.type]||[]).push(c)});
-  $('mineWrap').innerHTML='<p style="font-weight:600;margin:22px 0 0">Mijn kranen</p>'+Object.entries(groups).map(([t,cs])=>`<div class="mine-g"><b>${esc(t)}</b><ul class="mine">${cs.map(c=>`<li><span>Bouwjaar ${c.jaar}, ballast: ${Object.keys(c.charts).map(b=>nf1.format(+b)+' t').join(', ')}</span><button type="button" data-del="${c.id}">Verwijderen</button></li>`).join('')}</ul></div>`).join('');
+  $('mineWrap').innerHTML='<p style="font-weight:600;margin:22px 0 0">Mijn kranen</p>'+Object.entries(groups).map(([t,cs])=>`<div class="mine-g"><b>${esc(t)}</b><ul class="mine">${cs.map(c=>`<li><span>Bouwjaar ${c.jaar}, ballast: ${Object.keys(c.charts).map(b=>nf1.format(+b)+' t').join(', ')}</span>${cfgSuffix(c)?`<span class="note">${cfgSuffix(c).replace(/^ · /,'')}</span>`:''}<button type="button" data-del="${c.id}">Verwijderen</button></li>`).join('')}</ul></div>`).join('');
   $('mineWrap').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{mine=mine.filter(c=>c.id!==b.dataset.del);saveMine();renderMine();fillCranes($('crane').value)});
 }
 
@@ -1951,14 +2034,23 @@ function finder(){
     h+=`<div class="pick"><div class="cls">${klasse(p.c)?nf1.format(klasse(p.c)):'?'}<small>t</small></div>
       <div><h3>Bestel minimaal: ${label(p.c)}</h3><p>Met ${nf1.format(p.cfg.L)} m mast en ${nf1.format(p.cfg.b)} t ballast mag deze kraan ${nf1.format(p.cfg.cap)} t hijsen op ${nf1.format(r)} m. Jouw last is ${nf1.format(w)} t, dat is ${pc}% benutting${m?`, met ${m}% reserve gerekend`:''}.${sel.has(p.c.id)?' Deze kraan staat in je wagenpark.':''}</p></div>
       <div><button class="btn" type="button" data-load="${p.c.id}" data-b="${p.cfg.b}" data-l="${p.cfg.L}" style="margin-top:0">Open in rekenmodule</button> <button class="btn secondary" type="button" data-load="${p.c.id}" data-b="${p.cfg.b}" data-l="${p.cfg.L}" data-then3d="1" style="margin-top:8px">Bekijk in 3D</button></div></div>`;
+  }else if(!all().length){
+    h+=`<div class="verdict warn">Er zijn nog geen lasttabellen ingevoerd. Voeg de lasttabel van je kraan toe om exact te rekenen.</div>`;
   }else{
     h+=`<div class="verdict stop">Geen enkele kraan in de database kan ${nf1.format(need)} t hijsen op ${nf1.format(r)} m. Zoek een plek dichter bij de last, of vraag een kraanbedrijf naar een zwaardere kraan.</div>`;
   }
   h+=`<div class="scroll"><table class="options"><thead><tr><th>Kraan</th><th>Geschikt?</th><th>Opstelling</th><th class="n">Mag op ${nf1.format(r)} m</th><th class="n">Benutting</th><th></th></tr></thead><tbody>`;
   ok.forEach(x=>{const pc=Math.round(w/x.cfg.cap*100);h+=`<tr><td><b>${label(x.c)}</b>${sel.has(x.c.id)?' <span class="tagline ok">In wagenpark</span>':''}</td><td><span class="tagline ${pc>=90?'warn':'ok'}">${pc>=90?'Ja, krap':'Ja'}</span></td><td>${nf1.format(x.cfg.L)} m mast, ${nf1.format(x.cfg.b)} t ballast</td><td class="n">${nf1.format(x.cfg.cap)} t</td><td class="n">${pc}%</td><td class="n"><button class="btn sm secondary" type="button" data-load="${x.c.id}" data-b="${x.cfg.b}" data-l="${x.cfg.L}">Openen</button></td></tr>`});
   no.forEach(x=>{h+=`<tr class="no"><td>${label(x.c)}</td><td><span class="tagline no">Nee</span></td><td>${x.max?'Te zwaar voor deze vlucht':'Kan deze vlucht niet halen'}</td><td class="n">${x.max?nf1.format(x.max)+' t':'–'}</td><td class="n">–</td><td></td></tr>`});
-  h+='</tbody></table></div><p class="note" style="margin-top:12px">We kiezen per kraan de opstelling met de minste ballast en daarna de kortste mast, want die is meestal het goedkoopst om aan te voeren. Controleer de hijshoogte en de opstelplaats altijd zelf.</p>';
+  if(!all().length)h='';
+  const pre=LIEBHERR.filter(k=>k.v&&k.v>=r&&k.last>=need&&!ok.some(x=>x.c.catId===k.id)).sort((a,b)=>a.klasse-b.klasse||(b.j[0]||0)-(a.j[0]||0)).slice(0,10);
+  if(!all().length){h+=`<div class="verdict warn">Er zijn nog geen lasttabellen ingevoerd. Voeg de lasttabel van je kraan toe om exact te rekenen.</div>`}
+  else h+='</tbody></table></div>';
+  if(pre.length){h+=`<h3 class="pre-h">Voorselectie uit de kranendatabase</h3><p class="note">Deze kranen halen de vlucht en de last op papier (maximale vlucht en maximale last). Dat zegt nog niets over wat ze op jouw vlucht mogen hijsen: voeg de lasttabel toe om exact te rekenen.</p>
+    <div class="scroll"><table class="options"><thead><tr><th>Kraan</th><th class="n">Max. last</th><th class="n">Max. vlucht</th><th>Bouwjaren</th><th></th></tr></thead><tbody>${pre.map(k=>`<tr><td><b>${esc(catLabel(k))}</b></td><td class="n">${nf1.format(k.last)} t</td><td class="n">${nf1.format(k.v)} m</td><td>${esc(yrs(k))}</td><td class="n"><button class="btn sm secondary" type="button" data-cat="${k.id}">Lasttabel toevoegen</button></td></tr>`).join('')}</tbody></table></div>`}
+  h+='<p class="note" style="margin-top:12px">We kiezen per kraan de opstelling met de minste ballast en daarna de kortste mast, want die is meestal het goedkoopst om aan te voeren. Controleer de hijshoogte en de opstelplaats altijd zelf.</p>';
   out.innerHTML=h;
+  out.querySelectorAll('[data-cat]').forEach(b=>b.onclick=()=>{const k=CATALOG.find(x=>x.id===b.dataset.cat);if(k)openAddFor(k)});
   out.querySelectorAll('[data-load]').forEach(b=>b.onclick=()=>{
     if(mode!=='load')setMode('load');
     $('search').value='';fillCranes(b.dataset.load);$('crane').value=b.dataset.load;setHookDefault();fillConfig();
@@ -1980,7 +2072,7 @@ function loadAcct(){
   fleet=[];team=[];if(!session)return;
   try{const f=localStorage.getItem('vluchtcheck-wagenpark-'+session);if(f)fleet=JSON.parse(f)}catch(e){}
   try{const t=localStorage.getItem('vluchtcheck-team-'+session);if(t)team=JSON.parse(t)}catch(e){}
-  if(!fleet.length)fleet=session==='bedrijf'?[{num:'KR-01',craneId:'d300',busy:false},{num:'KR-02',craneId:'d100',busy:true},{num:'KR-03',craneId:'d60',busy:false}]:[{num:'Favoriet',craneId:'d100',busy:false}];
+  if(!fleet.length)fleet=session==='bedrijf'?[{num:'KR-01',craneId:'cat:l1300-63',busy:false},{num:'KR-02',craneId:'cat:l1100-53',busy:true},{num:'KR-03',craneId:'cat:l1060-31',busy:false}]:[{num:'Favoriet',craneId:'cat:l1090-42',busy:false}];
   if(!team.length)team=session==='bedrijf'?[{n:'Sanne Peters',r:'Beheerder'},{n:'Mehmet Yilmaz',r:'Machinist'},{n:'Kees Janssen',r:'Rigger'},{n:'Lisa de Boer',r:'Werkvoorbereider'}]:[{n:'Jan de Vries',r:'Freelancer'}];
 }
 const saveAcct=()=>{if(!session)return;try{localStorage.setItem('vluchtcheck-wagenpark-'+session,JSON.stringify(fleet));localStorage.setItem('vluchtcheck-team-'+session,JSON.stringify(team))}catch(e){}};
@@ -2005,11 +2097,11 @@ function renderAcct(){setTimeout(()=>{try{loadLog();renderLog();fillTeamNames()}
   renderFleet();renderTeam();
 }
 function renderFleet(){
-  $('fleetRows').innerHTML=fleet.map((f,i)=>{const c=all().find(x=>x.id===f.craneId);return `<tr><td><b>${esc(f.num)}</b></td><td>${c?label(c):'Onbekende kraan'}</td><td>${session==='bedrijf'?`<button class="status ${f.busy?'busy':'ok'}" data-busy="${i}" title="Status wisselen">${f.busy?'Op project':'Beschikbaar'}</button>`:''}</td><td style="white-space:nowrap;text-align:right"><button class="btn sm" type="button" data-use="${i}">Rekenen</button> <button class="x" type="button" data-rm="${i}">Verwijderen</button></td></tr>`}).join('')||'<tr><td colspan="4">Nog geen kranen.</td></tr>';
+  $('fleetRows').innerHTML=fleet.map((f,i)=>{const c=findC(f.craneId);return `<tr><td><b>${esc(f.num)}</b></td><td>${c?label(c):'Onbekende kraan'}</td><td>${session==='bedrijf'?`<button class="status ${f.busy?'busy':'ok'}" data-busy="${i}" title="Status wisselen">${f.busy?'Op project':'Beschikbaar'}</button>`:''}</td><td style="white-space:nowrap;text-align:right"><button class="btn sm" type="button" data-use="${i}">Rekenen</button> <button class="x" type="button" data-rm="${i}">Verwijderen</button></td></tr>`}).join('')||'<tr><td colspan="4">Nog geen kranen.</td></tr>';
   $('fleetRows').querySelectorAll('[data-use]').forEach(b=>b.onclick=()=>{const f=fleet[+b.dataset.use];$('search').value='';fillCranes(f.craneId);$('crane').value=f.craneId;setHookDefault();fillConfig();go('vlucht')});
   $('fleetRows').querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{fleet.splice(+b.dataset.rm,1);saveAcct();renderFleet();fillCranes($('crane').value);finder()});
   $('fleetRows').querySelectorAll('[data-busy]').forEach(b=>b.onclick=()=>{const f=fleet[+b.dataset.busy];f.busy=!f.busy;saveAcct();renderFleet()});
-  $('fCrane').innerHTML=all().map(c=>`<option value="${c.id}">${label(c)}</option>`).join('');
+  $('fCrane').innerHTML=anyC().map(c=>`<option value="${c.id}">${label(c)}</option>`).join('');
   $('fNum').placeholder=session==='bedrijf'?`Bijv. KR-${String(fleet.length+1).padStart(2,'0')}`:'Bijv. Project Maastricht';
 }
 function renderTeam(){
@@ -2047,20 +2139,20 @@ $('logLoginBtn').onclick=()=>$('loginDlg').showModal();
     box.classList.add('on');
     box.innerHTML=`<img src="${url}" alt="Jouw foto"><div><h4>Kraan herkennen…</h4><p>Dit duurt meestal een halve minuut.</p></div><div class="pr-act"><button class="btn sm secondary" type="button" id="prStop">Stoppen</button></div>`;
     $('prStop').onclick=()=>ctl.abort();
-    const db=all().map(c=>({id:c.id,naam:label(c),klasse_t:klasse(c)}));
+    const db=anyC().map(c=>({id:c.id,naam:label(c),klasse_t:klasse(c)}));
     const prompt=`Je helpt een kraanmachinist. Op de foto staat (waarschijnlijk) een mobiele kraan of een andere hijskraan.
 Bepaal zo goed mogelijk het merk, het type en de hijsklasse in ton. Let op belettering op de giek, de cabine en het chassis, het aantal assen, de vorm van de cabine en de giek, en de kleur.
 Kies daarna uit deze database de kraan die het beste past (dezelfde kraan, of anders die met de dichtstbijzijnde hijsklasse). Geef null als niets in de buurt komt of als er geen kraan op de foto staat.
 Database: ${JSON.stringify(db)}
 Antwoord alleen met één JSON-object, ${LANG!=='nl'?'met alle tekstvelden in het '+LNAME()+' (keep the JSON keys and the zekerheid/gewicht_bron values in Dutch exactly as shown)':'in het Nederlands'}:
-{"is_kraan": true, "merk": "Liebherr", "type": "LTM 1300-6.2", "klasse_t": 300, "assen": 6, "zekerheid": "hoog" | "middel" | "laag", "kenmerken": "korte zin over wat je ziet en waarop je het baseert", "match_id": "d300" of null}`;
+{"is_kraan": true, "merk": "Liebherr", "type": "LTM 1300-6.2", "klasse_t": 300, "assen": 6, "zekerheid": "hoog" | "middel" | "laag", "kenmerken": "korte zin over wat je ziet en waarop je het baseert", "match_id": "cat:l1300-63" of null}`;
     try{
       const r=await sample.json(prompt,{images:[f],signal:ctl.signal});
       if(!r||r.is_kraan===false){box.innerHTML=`<img src="${url}" alt="Jouw foto"><div><h4>Geen kraan gevonden</h4><p>Maak een foto waarop de hele kraan te zien is, het liefst van opzij.</p></div><div class="pr-act"><button class="btn sm secondary" type="button" id="prClose">Sluiten</button></div>`;$('prClose').onclick=()=>box.classList.remove('on');return}
       const z=['hoog','middel','laag'].includes(r.zekerheid)?r.zekerheid:'laag';
       const naam=[r.merk,r.type].filter(Boolean).map(String).join(' ')||'Onbekend type';
       const kl=num(r.klasse_t);
-      const m=r.match_id&&all().find(c=>c.id===String(r.match_id));
+      const m=r.match_id&&findC(String(r.match_id));
       box.innerHTML=`<img src="${url}" alt="Jouw foto"><div><h4>${esc(naam)}${kl?` · ${nf1.format(kl)} t`:''}<span class="conf ${z}">zekerheid ${z}</span></h4><p>${esc(r.kenmerken||'')}${r.assen?` ${esc(r.assen)} assen.`:''}</p><p>${m?`Beste match in de database: <b>${esc(label(m))}</b>.`:'Deze kraan staat niet in de database.'} Controleer altijd het typeplaatje en de lasttabel in de cabine.</p></div>
         <div class="pr-act">${m?`<button class="btn sm" type="button" id="prUse">Gebruik deze kraan</button>`:''}${kl?`<button class="btn sm secondary" type="button" id="prFind">Zoek op ${nf1.format(kl)} t</button>`:''}<button class="btn sm secondary" type="button" id="prClose">Sluiten</button></div>`;
       if(m)$('prUse').onclick=()=>{$('search').value='';fillCranes(m.id);$('crane').value=m.id;setHookDefault();fillConfig()};
@@ -2255,20 +2347,20 @@ function seedLogs(){
   const today=new Date(),d=n=>{const x=new Date(today);x.setDate(x.getDate()-n);return x.toISOString().slice(0,10)};
   const RG={zwaar:[{name:'Kettingset 4-sprong 20 t',n:1,kg:160},{name:'Sluiting 17 t',n:4,kg:7.5}],juk:[{name:'Hijsjuk 50 t, 6 m',n:1,kg:1800},{name:'Rondstrop 40 t, 8 m',n:2,kg:38},{name:'Sluiting 35 t',n:4,kg:24}],licht:[{name:'Rondstrop 10 t, 6 m',n:2,kg:7},{name:'Sluiting 8,5 t',n:2,kg:2.4}],mid:[{name:'Rondstrop 20 t, 6 m',n:2,kg:14},{name:'Sluiting 17 t',n:2,kg:7.5}]};
   const LOCS={'Nieuwbouw Maastricht-Noord':'Maastricht','Brugdeel Maasboulevard':'Maasboulevard, Maastricht','Dakkapellen Heerlen':'Heerlen','Koelmachines Venlo':'Venlo','Transformator Sittard':'Sittard','Kantoor Eindhoven':'Eindhoven','Windmolenonderhoud Roermond':'Roermond','Zwembad Kerkrade':'Kerkrade','Fabriekshal Weert':'Weert'};
-  const S=(n,project,craneId,boom,ballast,radius,weight,crit,lead,op,rig,desc)=>{const c=all().find(x=>x.id===craneId);let cap=null;if(c){const ch=c.charts[ballast];const j=ch?ch.booms.indexOf(boom):-1;if(j>=0){const r=lookup(ch,j,radius);if(!r.err)cap=r.cap}}
+  const S=(n,project,craneId,boom,ballast,radius,weight,crit,lead,op,rig,desc)=>{const c=findC(craneId);let cap=null;if(c){const ch=c.charts[ballast];const j=ch?ch.booms.indexOf(boom):-1;if(j>=0){const r=lookup(ch,j,radius);if(!r.err)cap=r.cap}}
     const rg=weight>=30?RG.juk:weight>=12?RG.zwaar:weight>=6?RG.mid:RG.licht;
     return {id:'s'+n+craneId,date:d(n),project,loc:LOCS[project]||'',rig:rg.map(x=>({...x})),hook:c&&c.spec?c.spec.hook:null,net:c&&c.spec?Math.round((weight-c.spec.hook-rg.reduce((a,x)=>a+x.n*x.kg,0)/1000)*100)/100:null,photos:[],craneId,craneLabel:c?label(c):craneId,boom,ballast,radius,weight,cap,pct:cap?Math.round(weight/cap*100):null,critical:crit,desc,team:{lead,op,rig},sigs:{}}};
   if(session!=='freelancer')return [
-    S(9,'Nieuwbouw Maastricht-Noord','d300',40,90,20,31,true,'Sanne Peters','Mehmet Yilmaz','Kees Janssen','Betonnen trappenhuis'),
-    S(16,'Brugdeel Maasboulevard','d500',45,165,24,43,true,'Lisa de Boer','Jan Bakker','Kees Janssen','Stalen brugdeel, tandemhijs voorbereiding'),
-    S(23,'Dakkapellen Heerlen','d60',20,18,12,3.2,false,'Sanne Peters','Ruud Smeets','Tom Hendriks','Prefab dakkapellen'),
-    S(31,'Koelmachines Venlo','d100',25,30,14,13.5,false,'Lisa de Boer','Mehmet Yilmaz','Tom Hendriks','Koelunit op dak'),
-    S(38,'Transformator Sittard','d300',30,67,16,38,true,'Sanne Peters','Jan Bakker','Kees Janssen','Transformator 38 t'),
-    S(52,'Kantoor Eindhoven','d160',28,45,18,12,false,'Lisa de Boer','Ruud Smeets','Tom Hendriks','Gevelelementen'),
-    S(66,'Windmolenonderhoud Roermond','d500',55,165,20,44,true,'Sanne Peters','Jan Bakker','Kees Janssen','Gondeldeksel'),
-    S(80,'Nieuwbouw Maastricht-Noord','d300',40,90,22,24,false,'Sanne Peters','Mehmet Yilmaz','Tom Hendriks','Prefab balkons'),
-    S(95,'Zwembad Kerkrade','d100',32,30,16,9.8,false,'Lisa de Boer','Mehmet Yilmaz','Kees Janssen','Stalen spanten'),
-    S(120,'Fabriekshal Weert','d160',36,45,20,15.5,true,'Lisa de Boer','Jan Bakker','Tom Hendriks','Dakliggers, krap op vlucht'),
+    S(9,'Nieuwbouw Maastricht-Noord','cat:l1300-63',40,90,20,31,true,'Sanne Peters','Mehmet Yilmaz','Kees Janssen','Betonnen trappenhuis'),
+    S(16,'Brugdeel Maasboulevard','cat:l1400-61',45,165,24,43,true,'Lisa de Boer','Jan Bakker','Kees Janssen','Stalen brugdeel, tandemhijs voorbereiding'),
+    S(23,'Dakkapellen Heerlen','cat:l1060-31',20,18,12,3.2,false,'Sanne Peters','Ruud Smeets','Tom Hendriks','Prefab dakkapellen'),
+    S(31,'Koelmachines Venlo','cat:l1100-53',25,30,14,13.5,false,'Lisa de Boer','Mehmet Yilmaz','Tom Hendriks','Koelunit op dak'),
+    S(38,'Transformator Sittard','cat:l1300-63',30,67,16,38,true,'Sanne Peters','Jan Bakker','Kees Janssen','Transformator 38 t'),
+    S(52,'Kantoor Eindhoven','cat:l1160-52',28,45,18,12,false,'Lisa de Boer','Ruud Smeets','Tom Hendriks','Gevelelementen'),
+    S(66,'Windmolenonderhoud Roermond','cat:l1400-61',55,165,20,44,true,'Sanne Peters','Jan Bakker','Kees Janssen','Gondeldeksel'),
+    S(80,'Nieuwbouw Maastricht-Noord','cat:l1300-63',40,90,22,24,false,'Sanne Peters','Mehmet Yilmaz','Tom Hendriks','Prefab balkons'),
+    S(95,'Zwembad Kerkrade','cat:l1100-53',32,30,16,9.8,false,'Lisa de Boer','Mehmet Yilmaz','Kees Janssen','Stalen spanten'),
+    S(120,'Fabriekshal Weert','cat:l1160-52',36,45,20,15.5,true,'Lisa de Boer','Jan Bakker','Tom Hendriks','Dakliggers, krap op vlucht'),
   ];
   return [
     S(12,'Inhuur Kraanverhuur Zuid','d100',25,30,12,15,false,'','Jan de Vries','',''),
@@ -2288,8 +2380,8 @@ function people(){
   return Object.values(m);
 }
 function fillTeamNames(){const names=new Set(team.map(t=>t.n));people().forEach(p=>names.add(p.name));$('teamNames').innerHTML=[...names].map(n=>`<option value="${esc(n)}">`).join('')}
-const cl=id=>{const c=all().find(x=>x.id===id);return c?klasse(c):null};
-const shortCrane=id=>{const c=all().find(x=>x.id===id);return c?(klasse(c)?nf1.format(klasse(c))+' t':label(c)):id};
+const cl=id=>{const c=findC(id);return c?klasse(c):null};
+const shortCrane=id=>{const c=findC(id);return c?(klasse(c)?nf1.format(klasse(c))+' t':label(c)):id};
 function renderLog(){
   $('logLogin').hidden=true;$('logMain').hidden=false;
   $('logLead').textContent=session!=='freelancer'?(session?`Alle hijsen van ${ACCTS.bedrijf.name}. Zie wie ervaring heeft met welke kraan en met kritische hijsen.`:'Alle hijsen van je team op één plek. Zie wie ervaring heeft met welke kraan en met kritische hijsen.'):'Je eigen hijsen als freelancer, handig als bewijs van je ervaring.';
@@ -2297,7 +2389,7 @@ function renderLog(){
   $('logKpis').innerHTML=`<div class="kpi"><p>Hijsen</p><b>${logs.length}</b></div><div class="kpi"><p>Kritische hijsen</p><b>${crit}</b></div><div class="kpi"><p>Mensen</p><b>${ppl.length}</b></div><div class="kpi"><p>Laatste hijs</p><b style="font-size:24px">${logs.length?fmtD(logs.map(l=>l.date).sort().pop()):'–'}</b></div>`;
   qFillCranes();qRenderRig();qRenderThumbs();
   // wie stuur ik
-  const ws=$('whoCrane'),prev=ws.value;ws.innerHTML=all().map(c=>`<option value="${c.id}">${esc(label(c))}</option>`).join('');ws.value=prev&&[...ws.options].some(o=>o.value===prev)?prev:($('crane').value||ws.options[0]?.value);
+  const ws=$('whoCrane'),prev=ws.value;ws.innerHTML=anyC().map(c=>`<option value="${c.id}">${esc(label(c))}</option>`).join('');ws.value=prev&&[...ws.options].some(o=>o.value===prev)?prev:($('crane').value||ws.options[0]?.value);
   renderWho();
   // mensen
   $('peopleRows').innerHTML=ppl.sort((a,b)=>b.lifts-a.lifts).map(p=>`<tr><td><b>${esc(p.name)}</b></td><td>${Object.keys(p.roles).map(r=>ROLE[r]).join(', ')}</td><td class="n">${p.lifts}</td><td class="n">${p.crit?`<span class="crit">${p.crit}</span>`:'0'}</td><td>${Object.entries(p.cranes).sort((a,b)=>b[1]-a[1]).map(([id,n])=>`<span class="cchip">${esc(shortCrane(id))} × ${n}</span>`).join('')}</td><td>${p.last?fmtD(p.last):'–'}</td></tr>`).join('')||'<tr><td colspan="6">Nog geen hijsen.</td></tr>';
@@ -2312,7 +2404,7 @@ function renderWho(){
     const s=sc[n]||(sc[n]={name:n,same:0,sameCrit:0,near:0,total:0,last:''});
     s.total++;if(same){s.same++;if(l.critical)s.sameCrit++}else if(near)s.near++;if(same&&l.date>s.last)s.last=l.date}});
   const list=Object.values(sc).map(s=>({...s,score:s.same*3+s.sameCrit*2+s.near})).filter(s=>s.score>0).sort((a,b)=>b.score-a.score||b.total-a.total);
-  const c=all().find(x=>x.id===id);
+  const c=findC(id);
   $('whoOut').innerHTML=list.length?`<div class="who">${list.slice(0,6).map((s,i)=>`<div class="who-row${i===0?' top':''}"><span class="rank">${i+1}</span><div><b>${esc(s.name)}</b><p>${s.same?`${s.same}× op deze kraan${s.sameCrit?`, waarvan ${s.sameCrit} kritisch`:''}${s.last?`, laatst op ${fmtD(s.last)}`:''}.`:'Nog niet op deze kraan.'}${s.near?` ${s.near}× op een vergelijkbare kraan.`:''}</p></div><div class="sc">${s.score}<small>punten</small></div></div>`).join('')}</div>`
     :`<p class="note">Nog niemand in het logboek heeft met ${c?esc(label(c)):'deze kraan'} of een vergelijkbare kraan gewerkt${onlyCrit?' bij een kritische hijs':''}.</p>`;
 }
@@ -2401,22 +2493,22 @@ $('hpSave').onclick=()=>{
 /* ---------- hijs snel toevoegen ---------- */
 let qPhotos=[],qRig=[];
 function qFillCranes(){
-  const qs=$('qCrane'),prev=qs.value;qs.innerHTML=all().map(c=>`<option value="${c.id}">${esc(label(c))}</option>`).join('');
+  const qs=$('qCrane'),prev=qs.value;qs.innerHTML=anyC().map(c=>`<option value="${c.id}">${esc(label(c))}</option>`).join('');
   qs.value=prev&&[...qs.options].some(o=>o.value===prev)?prev:($('crane').value||qs.options[0]?.value);qFillCfg();
 }
 function qFillCfg(){
-  const c=all().find(x=>x.id===$('qCrane').value),bs=$('qBallast'),pb=bs.value;
+  const c=findC($('qCrane').value),bs=$('qBallast'),pb=bs.value;
   bs.innerHTML=c?Object.keys(c.charts).map(Number).sort((a,b)=>b-a).map(b=>`<option value="${b}">${nf1.format(b)} t</option>`).join(''):'';
   if([...bs.options].some(o=>o.value===pb))bs.value=pb;qFillBoom();
 }
 function qFillBoom(){
-  const c=all().find(x=>x.id===$('qCrane').value),ch=c&&c.charts[$('qBallast').value],bm=$('qBoom'),pb=bm.value;
+  const c=findC($('qCrane').value),ch=c&&c.charts[$('qBallast').value],bm=$('qBoom'),pb=bm.value;
   bm.innerHTML=ch?ch.booms.map(L=>`<option value="${L}">${nf1.format(L)} m</option>`).join(''):'';
   if([...bm.options].some(o=>o.value===pb))bm.value=pb;else if(ch&&ch.booms.length>1)bm.value=ch.booms[Math.floor(ch.booms.length/2)];
   qCap();
 }
 function qCalc(){
-  const c=all().find(x=>x.id===$('qCrane').value),ch=c&&c.charts[$('qBallast').value],L=num($('qBoom').value),r=num($('qRadius').value),w=num($('qWeight').value);
+  const c=findC($('qCrane').value),ch=c&&c.charts[$('qBallast').value],L=num($('qBoom').value),r=num($('qRadius').value),w=num($('qWeight').value);
   let cap=null,err=null;if(ch&&r){const j=ch.booms.indexOf(L);if(j>=0){const res=lookup(ch,j,r);if(res.err)err=res.err;else cap=res.cap}}
   return {c,L,r,w,cap,err,pct:cap&&w?Math.round(w/cap*100):null};
 }
@@ -3268,7 +3360,7 @@ const EN={
 'Kade-analyse met video':'Quay check with video','Hijs met':'Lift with','Welke hijsmiddelen heb ik nodig?':'Which rigging do I need?','Vul de last en de situatie in. Je krijgt meteen een advies voor rondstroppen, banden of kettingwerk met de juiste werklast.':'Enter the load and the situation. You get advice straight away on round slings, web slings or chain with the right working load limit.',
 'Gewicht van de last (t)':'Load weight (t)','Aantal hijspunten':'Number of lifting points','1 (recht omhoog)':'1 (straight up)','Hoek sprong met de verticaal':'Leg angle from vertical','tot 45°':'up to 45°','45° tot 60°':'45° to 60°','Lengte per sprong (m)':'Length per leg (m)',
 'Scherpe randen of hoeken':'Sharp edges or corners','Kwetsbaar of geverfd oppervlak':'Fragile or painted surface','Last heeft hijsogen':'Load has lifting eyes','Hitte (boven 80 °C) of chemicaliën':'Heat (above 80 °C) or chemicals','Vul het gewicht van de last in.':'Enter the load weight.',
-'Kettingwerk':'Chain','Rondstroppen':'Round slings','Rondstroppen met kantbescherming':'Round slings with edge protection','Aantal':'Qty','Specificatie':'Specification','Bestel':'Order','Bestel alles bij Hardpoint Safety':'Order everything from Hardpoint Safety','Bestel bij Hardpoint Safety':'Order from Hardpoint Safety',"Hijskaart":"Rigging chart","Hijskaart: aanslaan":"Rigging chart: slinging","Kies hoe je aanslaat en vul op de tekening het gewicht van de last en de werklast van je band of strop in. De factoren zijn die van de hijskaart (EN 1492).":"Choose how you sling the load and enter the load weight and the working load limit of your sling on the drawing. The factors are those of the rigging chart (EN 1492).","Recht":"Straight","Snoerend":"Choke","U-bocht":"Basket","× 2 (in de broek)":"× 2 (basket)","1 strop":"1 sling","2 stroppen":"2 slings","enkel":"single","dubbel":"double","Gewicht last":"Load weight","Werklast band":"Sling WLL","Hoek met de verticaal":"Angle to vertical","0° evenwijdig":"0° parallel","tot 45°":"up to 45°","45° tot 60°":"45° to 60°","De hijskaart":"The rigging chart","Werklast van je band per aanslagwijze. Tik op een vak om die aanslagwijze te kiezen.":"Working load of your sling per method. Tap a cell to choose that method.","Boven 60° met de verticaal niet hijsen. Snoer niet over scherpe randen en hijs bij twee stroppen nooit meer dan de kaart aangeeft: de last verdeelt zich niet altijd gelijk.":"Never lift above 60° to the vertical. Do not choke over sharp edges, and with two slings never lift more than the chart shows: the load is not always shared evenly.","Aanslaan met de factoren van de hijskaart: recht, snoerend, U-bocht en hoek. Met advies en gewicht aan de haak.":"Slinging with the rigging chart factors: straight, choke, basket and angle. With advice and weight on the hook.","Sla de last goed aan, kies de juiste hijsmiddelen en tel alles op tot het gewicht aan de haak.":"Sling the load correctly, choose the right rigging and add it all up to the weight on the hook.","Nog geen advies. Vul het gewicht in bij Hijskaart.":"No advice yet. Enter the weight under Rigging chart.","Aanslagwijze":"Slinging method","Aantal stroppen":"Number of slings","Aanslaan":"Slinging",'Bestel opent de hijsmiddelen op de site van Hardpoint Safety, met soort, werklast en lengte al gekozen.':'Order opens the lifting equipment on the Hardpoint Safety site, with type, working load and length already selected.',' Bestel via de site van Hardpoint Safety: hijsmiddelen.':' Order via the Hardpoint Safety site: lifting equipment.','Bestel via de site van Hardpoint Safety: hijsmiddelen.':'Order via the Hardpoint Safety site: lifting equipment.','Zet in mijn hijsmiddelenlijst':'Put in my rigging list',
+'Kettingwerk':'Chain','Rondstroppen':'Round slings','Rondstroppen met kantbescherming':'Round slings with edge protection','Aantal':'Qty','Specificatie':'Specification','Bestel':'Order','Bestel alles bij Hardpoint Safety':'Order everything from Hardpoint Safety','Bestel bij Hardpoint Safety':'Order from Hardpoint Safety',"Max. last":"Max. load","Telescoopmast":"Telescopic boom","Lattice jib":"Lattice jib","Max. hijshoogte":"Max. hoist height","Max. vlucht":"Max. radius","Totale ballast":"Total counterweight","Assen":"Axles","Rijmotor":"Drive engine","Bouwjaren":"Years built","Bron: Liebherr":"Source: Liebherr","Bron: openbare gegevens, controleer met het datasheet":"Source: public data, check against the datasheet","Bouwjaren indicatief":"Years built are indicative","Configuratie":"Configuration","Alleen hoofdmast":"Main boom only","Hoofdmast met jib":"Main boom with jib","Jib-lengte (m)":"Jib length (m)","Jib-hoek (°)":"Jib offset (°)","Afstempeling":"Outrigger set-up","100% uitgeschoven":"100% extended","75% uitgeschoven":"75% extended","50% uitgeschoven":"50% extended","Op banden (zonder steunpoten)":"On tyres (no outriggers)","Er zijn nog geen lasttabellen ingevoerd. Voeg de lasttabel van je kraan toe om exact te rekenen.":"No load charts have been entered yet. Add your crane’s load chart to calculate exactly.","Voorselectie uit de kranendatabase":"Pre-selection from the crane database","Deze kranen halen de vlucht en de last op papier (maximale vlucht en maximale last). Dat zegt nog niets over wat ze op jouw vlucht mogen hijsen: voeg de lasttabel toe om exact te rekenen.":"These cranes reach the radius and the load on paper (maximum radius and maximum load). That says nothing yet about what they may lift at your radius: add the load chart to calculate exactly.","Hijskaart":"Rigging chart","Hijskaart: aanslaan":"Rigging chart: slinging","Kies hoe je aanslaat en vul op de tekening het gewicht van de last en de werklast van je band of strop in. De factoren zijn die van de hijskaart (EN 1492).":"Choose how you sling the load and enter the load weight and the working load limit of your sling on the drawing. The factors are those of the rigging chart (EN 1492).","Recht":"Straight","Snoerend":"Choke","U-bocht":"Basket","× 2 (in de broek)":"× 2 (basket)","1 strop":"1 sling","2 stroppen":"2 slings","enkel":"single","dubbel":"double","Gewicht last":"Load weight","Werklast band":"Sling WLL","Hoek met de verticaal":"Angle to vertical","0° evenwijdig":"0° parallel","tot 45°":"up to 45°","45° tot 60°":"45° to 60°","De hijskaart":"The rigging chart","Werklast van je band per aanslagwijze. Tik op een vak om die aanslagwijze te kiezen.":"Working load of your sling per method. Tap a cell to choose that method.","Boven 60° met de verticaal niet hijsen. Snoer niet over scherpe randen en hijs bij twee stroppen nooit meer dan de kaart aangeeft: de last verdeelt zich niet altijd gelijk.":"Never lift above 60° to the vertical. Do not choke over sharp edges, and with two slings never lift more than the chart shows: the load is not always shared evenly.","Aanslaan met de factoren van de hijskaart: recht, snoerend, U-bocht en hoek. Met advies en gewicht aan de haak.":"Slinging with the rigging chart factors: straight, choke, basket and angle. With advice and weight on the hook.","Sla de last goed aan, kies de juiste hijsmiddelen en tel alles op tot het gewicht aan de haak.":"Sling the load correctly, choose the right rigging and add it all up to the weight on the hook.","Nog geen advies. Vul het gewicht in bij Hijskaart.":"No advice yet. Enter the weight under Rigging chart.","Aanslagwijze":"Slinging method","Aantal stroppen":"Number of slings","Aanslaan":"Slinging",'Bestel opent de hijsmiddelen op de site van Hardpoint Safety, met soort, werklast en lengte al gekozen.':'Order opens the lifting equipment on the Hardpoint Safety site, with type, working load and length already selected.',' Bestel via de site van Hardpoint Safety: hijsmiddelen.':' Order via the Hardpoint Safety site: lifting equipment.','Bestel via de site van Hardpoint Safety: hijsmiddelen.':'Order via the Hardpoint Safety site: lifting equipment.','Zet in mijn hijsmiddelenlijst':'Put in my rigging list',
 'De koppeling met de webshop van Hardpoint Safety wordt ingesteld zodra het adres van de webshop bekend is.':'The link to the Hardpoint Safety web shop will be set up as soon as the shop address is known.',
 'Dit is een advies volgens de gangbare werklastfactoren (EN 13414 en EN 818). Gebruik alleen gekeurde hijsmiddelen; de aanslagman beslist.':'This is advice based on the standard working load factors (EN 13414 and EN 818). Only use inspected rigging; the slinger decides.',
 'Hitte of chemicaliën: textiel (polyester) is niet geschikt, daarom ketting.':'Heat or chemicals: textile (polyester) is not suitable, so chain.','Scherpe randen: banden en rondstroppen kunnen insnijden en scheuren, daarom kettingwerk.':'Sharp edges: web and round slings can be cut and tear, so chain.',

@@ -11,6 +11,7 @@ Een webapp van Hardpoint Safety voor kraanbedrijven, machinisten en riggers. Hie
 
 ## Functies van de app
 
+- **Kranendatabase:** 28 Liebherr LTM-typen van 60 tot 450 t, met bouwjaren, maximale last, mastlengte, lattice jib, hijshoogte, vlucht, ballast, assen en motor. Bron per type: Liebherr of openbare gegevens. Er zijn geen voorbeeldkranen meer: de lasttabel komt uit het officiële boekje van de eigen kraan, per bouwjaar, ballast, jib-configuratie en afstempeling.
 - **Vlucht berekenen:** kies een kraan en vul ballast, mastlengte, vlucht en last in op de tekening. Je ziet meteen of de hijs kan.
 - **Welke kraan bestellen?:** vul de vlucht en het gewicht in en zie welke kraan geschikt is.
 - **Hijskaart:** de aanslagfactoren voor recht (×1), snoerend (×0,8) en U-bocht (×2), met de hoek (EN 1492). Daarnaast advies over hijsmiddelen (EN 13414, EN 818) en het totale gewicht aan de haak.
