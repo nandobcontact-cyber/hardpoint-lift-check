@@ -1031,8 +1031,8 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
   <div class="screen-head"><a class="back" href="#/">← Start</a><h1>Hijskaart</h1><p>Sla de last goed aan, kies de juiste hijsmiddelen en tel alles op tot het gewicht aan de haak.</p><div class="ctx" data-ctx></div></div>
     <div class="panel">
           <section class="hk" id="hk">
-            <h3>Hijskaart: aanslaan</h3>
-            <p class="note">Kies hoe je aanslaat en vul op de tekening het gewicht van de last en de werklast van je band of strop in. De factoren zijn die van de hijskaart (EN 1492).</p>
+            <h3>Hijskaart — aanslagconfiguratie</h3>
+            <p class="note">Kies eerst de aanslagwijze en het aantal stroppen. Bekijk de opstelling in 3D en vul vervolgens de lastgegevens in.</p>
             <div class="hk-ctl">
               <div class="hk-seg" role="group" aria-label="Aanslagwijze" id="hkHitch">
                 <button type="button" data-h="recht"><b>Recht</b><span>× 1</span></button>
@@ -1044,13 +1044,14 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
                 <button type="button" data-n="2"><b>2 stroppen</b><span>dubbel</span></button>
               </div>
             </div>
+            <div class="hk-inputs" aria-label="Gegevens hijskaart">
+              <div class="fld"><label for="hkW">Gewicht last (ton)</label><input id="hkW" type="number" inputmode="decimal" min="0" step="0.1" placeholder="Bijv. 4,5"></div>
+              <div class="fld"><label for="hkS">Werklast band of strop (ton)</label><input id="hkS" type="number" inputmode="decimal" min="0" step="0.5" value="2"></div>
+              <div class="fld"><label for="hkA">Hoek met de verticaal</label><select id="hkA"><option value="0">0° evenwijdig</option><option value="45">tot 45°</option><option value="60">45° tot 60°</option></select></div>
+            </div>
             <div class="stage hk-stage" id="hkStage">
-              <svg id="hkSvg" viewBox="0 0 800 500" role="img" aria-label="Last aangeslagen met band of strop, met invoervakken voor gewicht, werklast en hoek"></svg>
-              <div class="tags">
-                <div class="tag load" id="hkTW"><label for="hkW">Gewicht last</label><div class="in"><input id="hkW" type="number" inputmode="decimal" min="0" step="0.1" placeholder="–"><span class="u">t</span></div></div>
-                <div class="tag" id="hkTS"><label for="hkS">Werklast band</label><div class="in"><input id="hkS" type="number" inputmode="decimal" min="0" step="0.5" value="2"><span class="u">t</span></div></div>
-                <div class="tag" id="hkTA"><label for="hkA">Hoek met de verticaal</label><div class="in"><select id="hkA"><option value="0">0° evenwijdig</option><option value="45">tot 45°</option><option value="60">45° tot 60°</option></select></div></div>
-              </div>
+              <svg id="hkSvg" viewBox="0 0 800 500" role="img" aria-label="Schematische technische tekening van de aanslagconfiguratie"></svg>
+              <div class="tags" aria-hidden="true"></div>
             </div>
             <div id="hkOut" aria-live="polite"></div>
             <h4 class="hk-th">De hijskaart</h4>
@@ -4181,5 +4182,16 @@ applyLang(true);
 .hk3d-controls button{border:1px solid var(--line);border-radius:8px;background:var(--field);color:var(--ink);padding:10px;cursor:pointer}
 .hk3d-note{margin:12px 0 0}
 </style>
-<script src="hijskaart-3d.js" defer></script>
+<style>
+.hk-inputs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0}
+.hk-inputs .fld{min-width:0}
+.hk-inputs label{display:block;font-weight:700;font-size:14px;margin-bottom:6px}
+.hk-inputs input,.hk-inputs select{width:100%;min-width:0;border:1px solid var(--line);border-radius:9px;background:var(--field);color:var(--ink);padding:12px;font:600 16px "Barlow",sans-serif}
+#hk3d{display:flex;flex-direction:column}
+#hk3d .hk3d-top{order:0}
+#hk3d canvas{order:1}
+#hk3d .hk3d-controls{order:2}
+#hk3d .hk3d-note{order:3}
+@media(max-width:700px){.hk-inputs{grid-template-columns:1fr}.hk-seg button b{font-size:16px}.hk3d-top span{display:block}}
+</style><script src="hijskaart-3d.js" defer></script>
 </body></html>
