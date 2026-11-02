@@ -1049,11 +1049,11 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
               <div class="fld"><label for="hkS">Werklast band of strop (ton)</label><input id="hkS" type="number" inputmode="decimal" min="0" step="0.5" value="2"></div>
               <div class="fld"><label for="hkA">Hoek met de verticaal</label><select id="hkA"><option value="0">0° evenwijdig</option><option value="45">tot 45°</option><option value="60">45° tot 60°</option></select></div>
             </div>
-            <div class="stage hk-stage" id="hkStage">
+            <details class="hk-old-drawing"><summary>Technische 2D-tekening bekijken</summary><div class="stage hk-stage" id="hkStage">
               <svg id="hkSvg" viewBox="0 0 800 500" role="img" aria-label="Schematische technische tekening van de aanslagconfiguratie"></svg>
               <div class="tags" aria-hidden="true"></div>
             </div>
-            <div id="hkOut" aria-live="polite"></div>
+            </details><div id="hkOut" aria-live="polite"></div>
             <h4 class="hk-th">De hijskaart</h4>
             <p class="note">Werklast van je band per aanslagwijze. Tik op een vak om die aanslagwijze te kiezen.</p>
             <div class="scroll"><table class="hk-t" id="hkTable"></table></div>
@@ -3752,7 +3752,7 @@ function renderHk(){
   const W=num($('hkW').value),S=num($('hkS').value),M=hkFac(hk.h,hk.n,hk.a);
   const cap=S>0?Math.round(S*M*100)/100:null,bad=W>0&&cap!=null&&cap<W-1e-9;
   lastHk=S>0?{h:hk.h,n:hk.n,a:hk.a,M,S,W,cap,bad}:null;
-  $('hkTW').classList.toggle('bad',!!bad);
+  const hkWeightField=$('hkW'); if(hkWeightField)hkWeightField.classList.toggle('bad',!!bad);
   const what=hkWhat(hk.h,hk.n,hk.a);
   let msg='';
   if(cap==null)msg=T2('Vul de werklast van je band of strop in.','Enter the working load limit of your sling.');
@@ -4187,7 +4187,7 @@ applyLang(true);
 .hk-inputs .fld{min-width:0}
 .hk-inputs label{display:block;font-weight:700;font-size:14px;margin-bottom:6px}
 .hk-inputs input,.hk-inputs select{width:100%;min-width:0;border:1px solid var(--line);border-radius:9px;background:var(--field);color:var(--ink);padding:12px;font:600 16px "Barlow",sans-serif}
-#hk3d{display:flex;flex-direction:column}
+#hk3d{display:flex;flex-direction:column}\n.hk-old-drawing{margin:12px 0}.hk-old-drawing summary{cursor:pointer;font-weight:600;color:var(--muted);padding:8px 0}
 #hk3d .hk3d-top{order:0}
 #hk3d canvas{order:1}
 #hk3d .hk3d-controls{order:2}
