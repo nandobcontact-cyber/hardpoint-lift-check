@@ -15,8 +15,23 @@ faces.sort((a,b)=>a.reduce((v,i)=>v+proj(points[i])[2],0)-b.reduce((v,i)=>v+proj
 faces.forEach((face,i)=>{ctx.beginPath();face.forEach((v,j)=>{const p=proj(points[v]);j?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]);});ctx.closePath();ctx.fillStyle=['#8195a6','#a5b4c1','#71899b','#91a5b5','#b8c5d0'][i];ctx.fill();ctx.strokeStyle='#30485a';ctx.lineWidth=2;ctx.stroke();});
 const n=document.querySelector('#hkN button[aria-pressed="true"]')?.dataset.n||'1',hitch=document.querySelector('#hkHitch button[aria-pressed="true"]')?.dataset.h||'snoer';
 const hook=[0,2.25,0];line(hook,[0,1.88,0],'#344454',10);
-let ends=n==='2'?[[-.82,.45,0],[.82,.45,0]]:[[0,.45,0]];
-ends.forEach(p=>{line([0,1.88,0],p,hitch==='snoer'?'#d97706':'#e05b18',8);if(hitch==='u'){line(p,[p[0],-.55,p[2]],'#e05b18',6);}});
+// Three distinct conceptual sling paths: direct, choker around the load, basket underneath.
+const slingColor='#e46a16';
+function path(vertices,width=8){for(let i=1;i<vertices.length;i++)line(vertices[i-1],vertices[i],slingColor,width);}
+const positions=n==='2'?[-.65,.65]:[0];
+positions.forEach(x=>{
+  if(hitch==='recht'){
+    path([[0,1.88,0],[x,.45,0]]);
+  }else if(hitch==='u'){
+    // Both legs lead to the hook; the sling returns under the load.
+    path([[0,1.88,0],[x,.48,-.66],[x,-.65,-.66],[x,-.65,.66],[x,.48,.66],[0,1.88,0]],7);
+  }else{
+    // Choker loop goes down one side, under and around the load, then through the eye.
+    const eye=[x,.69,-.67];
+    path([[0,1.88,0],eye,[x,.37,-.7],[x,-.66,-.7],[x,-.66,.7],[x,.36,.7],[x,.69,-.67]],7);
+    const e=proj(eye);ctx.beginPath();ctx.arc(e[0],e[1],7,0,Math.PI*2);ctx.strokeStyle='#344454';ctx.lineWidth=4;ctx.stroke();
+  }
+});
 let hp=proj(hook);ctx.beginPath();ctx.arc(hp[0],hp[1],12,0,Math.PI*2);ctx.strokeStyle='#273b4a';ctx.lineWidth=8;ctx.stroke();
 ctx.fillStyle='#263c50';ctx.font='600 20px sans-serif';ctx.fillText('LAST',w/2-27,h*.85);
 }
