@@ -80,7 +80,7 @@ $('liftForm').onsubmit=e=>{e.preventDefault();action(e.submitter,async()=>{if(!c
 $('project').onchange=()=>loadProject().catch(e=>say(message(e)));
 $('refresh').onclick=e=>action(e.target,async()=>{await refresh();say('Overzicht vernieuwd.')});
 try{
-  const response=await fetch('/api/team-config');if(!response.ok)throw new Error('De online teamomgeving is nog niet aangesloten. De beheerder moet eerst de databasekoppeling activeren.');
+  let response=await fetch('/api/team-config');if(response.status===503||response.status===404)response=await fetch('./team-config.json');if(!response.ok)throw new Error('De online teamomgeving is nog niet aangesloten. De beheerder moet eerst de databasekoppeling activeren.');
   const {url,key}=await response.json();client=createClient(url,key,{auth:{storage:sessionStorage,storageKey:'hlc-team-auth',autoRefreshToken:true,persistSession:true,detectSessionInUrl:false}});
   const data=check(await client.auth.getSession());
   if(data.session)await session();else{$('auth').hidden=false;say('Log in met je persoonlijke account.')}
