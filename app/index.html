@@ -1,6 +1,12 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}#fCrane,.add-row select,.add-row .fld{min-width:0;max-width:100%;width:100%}
 .fleet-grid>*{min-width:0}
 </style></head><body>
+<style>
+body:not(.account-ready) main.screen,body:not(.account-ready) .menu-wrap,body:not(.account-ready) #navFleet{display:none!important}
+#accessGate{max-width:650px;margin:48px auto;padding:24px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+body.account-ready #accessGate{display:none}
+</style>
+<section id="accessGate" aria-labelledby="accessTitle"><h1 id="accessTitle">Welkom bij Hardpoint Lift Check</h1><p>Log in of maak een persoonlijk account aan om de app te gebruiken.</p><p>Gratis tijdens de testfase. Geen betaalgegevens nodig.</p><p id="accessStatus" role="status">Account controleren…</p><div class="actions"><a class="btn" href="team.html">Inloggen</a><a class="btn secondary" href="team.html?mode=signup">Account aanmaken</a></div></section>
 <!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -1226,13 +1232,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
   </div>
 </main>
 
-<dialog id="loginDlg" aria-labelledby="loginH">
-  <h2 id="loginH">Inloggen</h2>
-  <p class="note">Dit is een demo. Kies een account om te zien hoe Hardpoint Lift Check werkt voor een bedrijf of voor een freelancer.</p>
-  <button class="choice" type="button" data-acct="bedrijf"><b>Demo Kraanverhuur BV</b>Bedrijfsabonnement, 10 accounts, gedeeld wagenpark</button>
-  <button class="choice" type="button" data-acct="freelancer"><b>Jan de Vries</b>Freelancer, 1 account, eigen kranenlijst</button>
-  <div class="actions"><button class="btn secondary" type="button" id="loginCancel">Annuleren</button></div>
-</dialog>
+<dialog id="loginDlg" aria-labelledby="loginH"><h2 id="loginH">Persoonlijk account</h2><p>Gebruik je eigen e-mailadres en wachtwoord.</p><div class="actions"><a class="btn" href="team.html">Inloggen</a><a class="btn secondary" href="team.html?mode=signup">Account aanmaken</a><button class="btn secondary" id="loginCancel" type="button">Sluiten</button></div></dialog>
 
 <dialog id="v3d" aria-labelledby="v3dTitle">
   <div class="v3d-head"><div><span class="note">3D-weergave</span><h2 id="v3dTitle" style="margin:0;font-size:26px"></h2></div><button class="btn secondary" type="button" id="v3dClose" style="margin-top:0">Sluiten</button></div>
@@ -2116,10 +2116,11 @@ function finder(){
 /* ---------- inloggen en wagenpark ---------- */
 let session=null,fleet=[],team=[];
 const ACCTS={bedrijf:{name:'Demo Kraanverhuur BV',user:'Sanne Peters',seats:10},freelancer:{name:'Jan de Vries',user:'Jan de Vries',seats:1}};
-try{session=localStorage.getItem('vluchtcheck-sessie')||null}catch(e){}
-/* inloggen staat voorlopig uit: zet FLEET_LOCK op true om het weer aan te zetten */
-const FLEET_LOCK=false;
-if(!FLEET_LOCK&&!session)session='bedrijf';
+// Legacy demo choices are never proof of a real account.
+try{localStorage.removeItem('vluchtcheck-sessie')}catch(e){}
+/* Demo-accountkeuze uitgeschakeld; echte toegang loopt via access.js. */
+const FLEET_LOCK=true;
+
 function loadAcct(){
   fleet=[];team=[];if(!session)return;
   try{const f=localStorage.getItem('vluchtcheck-wagenpark-'+session);if(f)fleet=JSON.parse(f)}catch(e){}
@@ -2129,9 +2130,10 @@ function loadAcct(){
 }
 const saveAcct=()=>{if(!session)return;try{localStorage.setItem('vluchtcheck-wagenpark-'+session,JSON.stringify(fleet));localStorage.setItem('vluchtcheck-team-'+session,JSON.stringify(team))}catch(e){}};
 function renderAcct(){setTimeout(()=>{try{loadLog();renderLog();fillTeamNames()}catch(e){}},0);
+  if(window.hlcRenderAccount){window.hlcRenderAccount();return}
   const box=$('acctBox');
   $('menuAcct').textContent=session?'Uitloggen':'Inloggen';
-  if(!session){box.innerHTML='<button class="navbtn" type="button" id="loginBtn">Inloggen</button>';$('loginBtn').onclick=()=>$('loginDlg').showModal();$('wagenpark').hidden=true;$('navFleet').hidden=true;$('fleetLogin').hidden=false;
+  if(!session){box.innerHTML='<button class="navbtn" type="button" id="loginBtn">Inloggen</button>';$('loginBtn').onclick=()=>location.href='team.html';$('wagenpark').hidden=true;$('navFleet').hidden=true;$('fleetLogin').hidden=false;
     $('tileFleetT').textContent='Wagenpark';$('tileFleetD').textContent='Log in om de kranen van je bedrijf of je favorieten te zien.';$('fleetScreenT').textContent='Wagenpark';$('menuFleet').textContent='Wagenpark';return}
   $('fleetLogin').hidden=true;
   $('tileFleetT').textContent=session==='bedrijf'?'Wagenpark':'Mijn kranen';
@@ -2167,8 +2169,8 @@ $('fAdd').onclick=()=>{const id=$('fCrane').value,nm=$('fNum').value.trim()||$('
 $('tAdd').onclick=()=>{const n=$('tName').value.trim();if(!n)return;team.push({n,r:'Machinist'});$('tName').value='';saveAcct();renderTeam()};
 document.querySelectorAll('.choice').forEach(b=>b.onclick=()=>{session=b.dataset.acct;try{localStorage.setItem('vluchtcheck-sessie',session)}catch(e){}$('loginDlg').close();loadAcct();renderAcct();fillCranes();setHookDefault();fillConfig();finder()});
 $('loginCancel').onclick=()=>$('loginDlg').close();
-$('fleetLoginBtn').onclick=()=>$('loginDlg').showModal();
-$('logLoginBtn').onclick=()=>$('loginDlg').showModal();
+$('fleetLoginBtn').onclick=()=>location.href='team.html';
+$('logLoginBtn').onclick=()=>location.href='team.html';
 
 /* ---------- AI-koppeling ----------
    Binnen de Claude-app: claude.use('sample').
@@ -2512,7 +2514,7 @@ function closeMenu(){$('menuPanel').hidden=true;$('menuBtn').setAttribute('aria-
 $('menuBtn').onclick=e=>{e.stopPropagation();const open=$('menuPanel').hidden;$('menuPanel').hidden=!open;$('menuBtn').setAttribute('aria-expanded',String(open));if(open){$('menuPanel').scrollTop=0;if(!matchMedia('(pointer:coarse)').matches)$('menuPanel').querySelector('a:not([hidden])')?.focus({preventScroll:true})}};
 /* pointerdown in plaats van click: op iPhone vuurt een tik op niet-klikbare plekken geen click af */
 document.addEventListener('pointerdown',e=>{if(!$('menuPanel').hidden&&!e.target.closest('.menu-wrap'))closeMenu()});
-$('menuAcct').onclick=e=>{e.preventDefault();closeMenu();if(session)$('logoutBtn')?.click();else $('loginDlg').showModal()};
+$('menuAcct').onclick=e=>{e.preventDefault();closeMenu();if(session)$('logoutBtn')?.click();else location.href='team.html'};
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('menuPanel').hidden){closeMenu();$('menuBtn').focus()}});
 $('menuPanel').addEventListener('click',e=>{if(e.target.closest('a'))closeMenu()});
 
@@ -4005,4 +4007,5 @@ applyLang(true);
 </html>
 
 
+<script type="module" src="access.js"></script>
 </body></html>
