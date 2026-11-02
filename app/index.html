@@ -1051,7 +1051,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
             </div>
             <details class="hk-old-drawing"><summary>Technische 2D-tekening bekijken</summary><div class="stage hk-stage" id="hkStage">
               <svg id="hkSvg" viewBox="0 0 800 500" role="img" aria-label="Schematische technische tekening van de aanslagconfiguratie"></svg>
-              <div class="tags" aria-hidden="true"></div>
+              <div class="tags" aria-hidden="true"><span id="hkTW" hidden></span><span id="hkTS" hidden></span><span id="hkTA" hidden></span></div>
             </div>
             </details><div id="hkOut" aria-live="polite"></div>
             <h4 class="hk-th">De hijskaart</h4>
@@ -4187,7 +4187,7 @@ applyLang(true);
 .hk-inputs .fld{min-width:0}
 .hk-inputs label{display:block;font-weight:700;font-size:14px;margin-bottom:6px}
 .hk-inputs input,.hk-inputs select{width:100%;min-width:0;border:1px solid var(--line);border-radius:9px;background:var(--field);color:var(--ink);padding:12px;font:600 16px "Barlow",sans-serif}
-#hk3d{display:flex;flex-direction:column}\n.hk-old-drawing{margin:12px 0}.hk-old-drawing summary{cursor:pointer;font-weight:600;color:var(--muted);padding:8px 0}
+#hk3d{display:flex;flex-direction:column}\n.hk-old-drawing .tags{display:none!important}.hk-old-drawing{margin:12px 0}.hk-old-drawing summary{cursor:pointer;font-weight:600;color:var(--muted);padding:8px 0}
 #hk3d .hk3d-top{order:0}
 #hk3d canvas{order:1}
 #hk3d .hk3d-controls{order:2}
