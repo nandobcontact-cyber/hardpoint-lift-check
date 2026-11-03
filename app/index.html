@@ -91,6 +91,7 @@ nav .cta:hover{color:var(--signal-ink);background:#FF8533}
 .tag .in{display:flex;align-items:baseline;gap:6px}
 .tag input,.tag select{font:700 30px/1 "Barlow Condensed","Arial Narrow",sans-serif;color:var(--ink);background:transparent;border:0;border-bottom:2px solid var(--line);border-radius:0;padding:2px 0;width:92px;text-align:right;font-variant-numeric:tabular-nums}
 .tag select{width:auto;min-width:96px;text-align:left;cursor:pointer}
+.tag input::-webkit-calendar-picker-indicator{display:none!important;opacity:0}
 .tag input:focus,.tag select:focus{border-bottom-color:var(--signal);outline:none}
 .tag input::-webkit-inner-spin-button,.tag input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 .tag input[type=number]{-moz-appearance:textfield;appearance:textfield}
@@ -723,10 +724,10 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
       <div class="stage" id="stage">
         <svg id="svg" viewBox="0 0 1000 660" role="img" aria-label="Mobiele kraan met invoervakken voor ballast, mast, vlucht en last"></svg>
         <div class="tags">
-          <div class="tag" id="tBallast"><label for="ballast">Ballast</label><div class="in"><select id="ballast"></select></div></div>
-          <div class="tag" id="tBoom"><label for="boom">Mastlengte</label><div class="in"><select id="boom"></select></div></div>
-          <div class="tag load" id="tWeight"><label for="weight" id="weightLbl">Last aan de haak</label><div class="in"><input id="weight" type="number" inputmode="decimal" min="0" step="0.1" placeholder="–"><span class="u">t</span></div></div>
-          <div class="tag" id="tRadius"><label for="radius" id="radiusLbl">Vlucht</label><div class="in"><input id="radius" type="number" inputmode="decimal" min="0" step="0.5" value="20"><span class="u">m</span></div></div>
+          <div class="tag" id="tBallast"><label for="ballast">Ballast</label><div class="in"><input id="ballast" type="text" inputmode="decimal" autocomplete="off" list="ballastList" placeholder="–"><span class="u">t</span><datalist id="ballastList"></datalist></div></div>
+          <div class="tag" id="tBoom"><label for="boom">Mastlengte</label><div class="in"><input id="boom" type="text" inputmode="decimal" autocomplete="off" list="boomList" placeholder="–"><span class="u">m</span><datalist id="boomList"></datalist></div></div>
+          <div class="tag load" id="tWeight"><label for="weight" id="weightLbl">Last aan de haak</label><div class="in"><input id="weight" type="text" inputmode="decimal" autocomplete="off" placeholder="–"><span class="u">t</span></div></div>
+          <div class="tag" id="tRadius"><label for="radius" id="radiusLbl">Vlucht</label><div class="in"><input id="radius" type="text" inputmode="decimal" autocomplete="off" value="20"><span class="u">m</span></div></div>
         </div>
       </div>
       <div class="result" aria-live="polite">
@@ -1645,17 +1646,25 @@ function fillCranes(keep){
 }
 const crane=()=>findC($('crane').value);
 function fillConfig(){
-  const c=crane(),bs=$('ballast'),prev=bs.value;bs.innerHTML='';
-  if(c)Object.keys(c.charts).map(Number).sort((a,b)=>b-a).forEach(b=>{const o=document.createElement('option');o.value=b;o.textContent=nf1.format(b)+' t';bs.appendChild(o)});
-  if([...bs.options].some(o=>o.value===prev))bs.value=prev;
+  const c=crane(),bs=$('ballast'),ks=c?Object.keys(c.charts).map(Number).sort((a,b)=>b-a):[];
+  $('ballastList').innerHTML=ks.map(b=>`<option value="${String(b).replace('.',',')}">`).join('');
+  if(ks.length&&!ks.includes(num(bs.value)))bs.value=String(ks[0]).replace('.',',');
+  const ch=chart(),bm=$('boom');
+  if(ch&&!ch.booms.includes(num(bm.value))&&ch.booms.length)bm.value=String(ch.booms[Math.floor(ch.booms.length/2)]).replace('.',',');
   fillBooms($('boom').value);
 }
-const chart=()=>{const c=crane();return c?c.charts[$('ballast').value]:null};
+/* Ballast en mastlengte zijn vrij in te vullen. Staat de waarde niet precies in de lasttabel,
+   dan rekenen we veilig: met de eerstvolgende LAGERE ballast en de eerstvolgende LANGERE mast uit de tabel. */
+function balKey(){const c=crane();if(!c)return null;const ks=Object.keys(c.charts).map(Number).sort((a,b)=>b-a);if(!ks.length)return null;
+  const b=num($('ballast').value);if(b==null)return ks[0];const k=ks.find(x=>x<=b+1e-9);return k==null?null:k}
+const chart=()=>{const c=crane(),k=balKey();return c&&k!=null?c.charts[k]:null};
+function boomEff(ch,L){if(!ch||L==null)return null;const s=ch.booms.slice().sort((a,b)=>a-b);const x=s.find(v=>v>=L-1e-9);return x==null?null:x}
+function bIdx(ch,L){const x=boomEff(ch,L);return x==null?-1:ch.booms.indexOf(x)}
 function fillBooms(prev){
-  const ch=chart(),bm=$('boom');bm.innerHTML='';
-  if(ch)ch.booms.forEach(L=>{const o=document.createElement('option');o.value=L;o.textContent=nf1.format(L)+' m';bm.appendChild(o)});
-  if(prev&&[...bm.options].some(o=>o.value===prev))bm.value=prev;
-  else if(ch&&ch.booms.length>1)bm.value=ch.booms[Math.floor(ch.booms.length/2)];
+  const ch=chart(),bm=$('boom');
+  $('boomList').innerHTML=ch?ch.booms.map(L=>`<option value="${String(L).replace('.',',')}">`).join(''):'';
+  if(prev!==undefined&&num(prev)!=null)bm.value=prev;
+  else if(ch&&ch.booms.length&&!ch.booms.includes(num(bm.value)))bm.value=String(ch.booms[Math.floor(ch.booms.length/2)]).replace('.',',');
   update();
 }
 
@@ -1861,7 +1870,10 @@ function draw(o){
    const hit=(p,h)=>placed.find(([q,g])=>Math.abs(p[0]-q[0])<h[0]+g[0]&&Math.abs(p[1]-q[1])<h[1]+g[1]);
    [[posW,sz('tWeight')],[posM,sz('tBoom')],[posB,sz('tBallast')]].forEach(([p,h])=>{
      for(let n=0;n<40;n++){const o=hit(p,h);if(!o)break;const [q,g]=o;
-       const up=q[1]-g[1]-h[1]-1;if(up-h[1]>=VB.y){p[1]=up}else{p[0]=Math.min(VB.x+VB.w-h[0],q[0]+g[0]+h[0]+1)}}
+       /* probeer boven, links, onder en rechts van het vakje dat in de weg zit; kies de eerste plek die vrij is en binnen beeld valt */
+       const inB=c=>c[0]-h[0]>=VB.x&&c[0]+h[0]<=VB.x+VB.w&&c[1]-h[1]>=VB.y&&c[1]+h[1]<=VB.y+VB.h;
+       const cand=[[p[0],q[1]-g[1]-h[1]-1],[q[0]-g[0]-h[0]-1,p[1]],[p[0],q[1]+g[1]+h[1]+1],[q[0]+g[0]+h[0]+1,p[1]]].filter(inB);
+       const free=cand.find(c=>!hit(c,h))||cand[0];if(!free)break;p[0]=free[0];p[1]=free[1]}
      placed.push([p,h])});}
   {
     const lead=(x1,y1,x2,y2)=>`<g class="leader"><line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="var(--ink)" stroke-width="1.6"/><circle cx="${x1}" cy="${y1}" r="5" fill="var(--surface)" stroke="var(--ink)" stroke-width="2"/></g>`;
@@ -1887,7 +1899,7 @@ function renderCtx(){
   document.querySelectorAll('[data-ctx]').forEach(el=>el.innerHTML=html);
 }
 function updateMain(){
-  const c=crane(),ch=chart(),L=num($('boom').value),j=ch?ch.booms.indexOf(L):-1;
+  const c=crane(),ch=chart(),L=num($('boom').value),j=ch?bIdx(ch,L):-1;
   const big=$('big'),sub=$('sub'),ver=$('verdict');ver.innerHTML='';
   const ballasts=c?Object.keys(c.charts).map(Number):[0];
   const base={L:L||30,Lmax:ch?Math.max(...ch.booms):70,Lmin:ch?Math.min(...ch.booms):15,bal:num($('ballast').value)||0,balMax:Math.max(1,...ballasts),bad:false};
@@ -1900,10 +1912,16 @@ function updateMain(){
     sub.innerHTML=`<b>${esc(catLabel(k))}</b> (${k.klasse} t, ${k.assen} assen) staat in de database, maar er is nog geen lasttabel voor. Lasttabellen verschillen per bouwjaar, dus voeg de tabel toe uit het boekje van jouw kraan.${vs.length?` Al ingevoerd: ${vs.map(v=>v.jaar).sort().join(', ')}.`:''}${catSpec(k)}<button class="btn sm" type="button" id="catAdd" style="margin-top:10px">Lasttabel toevoegen</button>`;
     $('catAdd').onclick=()=>openAddFor(k);
     $('tableWrap').innerHTML='';target={...base,r:base.L*0.5};animate();return}
+  if(c&&Object.keys(c.charts).length&&(!ch||j<0)){big.textContent='–';
+    const ks=Object.keys(c.charts).map(Number),bi=num($('ballast').value),ch2=ch||c.charts[Math.max(...ks)];
+    sub.textContent=!ch?(bi==null?'Vul de ballast in.':`Voor ${nf1.format(bi)} t ballast is er geen lasttabel. De kleinste ballast in de tabel is ${nf1.format(Math.min(...ks))} t.`)
+      :L==null?'Vul de mastlengte in.':`Een mast van ${nf1.format(L)} m is langer dan in de lasttabel staat (maximaal ${nf1.format(Math.max(...ch2.booms))} m).`;
+    $('tableWrap').innerHTML='';target={...base,r:(base.L)*0.5};animate();return}
   if(!c||!ch||j<0){big.textContent='–';sub.textContent='Kies een kraan om te beginnen.';$('tableWrap').innerHTML='';target={...base,r:base.L*0.5};animate();return}
   const own=c.custom?'<div class="verdict warn">Eigen invoer, nog niet gecontroleerd. Controleer de waarden met het boekje van de kraan.</div>':'';
   const w=num($('weight').value);
-  const cfg=`${nf1.format(L)} m mast en ${nf1.format(base.bal)} t ballast`;
+  const Le=ch.booms[j],Be=balKey();
+  const cfg=`${nf1.format(L)} m mast en ${nf1.format(base.bal)} t ballast`+((Le!==L||Be!==base.bal)?` (gerekend met de tabel voor ${nf1.format(Le)} m mast en ${nf1.format(Be)} t ballast)`:'');
   let hit=null;
   if(mode==='load'){
     const r=num($('radius').value);
@@ -1958,8 +1976,8 @@ function setMode(m){mode=m;$('mLoad').setAttribute('aria-pressed',m==='load');$(
 $('mLoad').onclick=()=>setMode('load');$('mReach').onclick=()=>setMode('reach');
 $('search').oninput=()=>fillCranes($('crane').value);$('crane').addEventListener('change',renderHits);
 $('crane').onchange=()=>{setHookDefault();fillConfig()};
-$('ballast').onchange=()=>fillBooms($('boom').value);
-$('boom').onchange=update;
+$('ballast').oninput=()=>fillBooms($('boom').value);$('ballast').onchange=()=>fillBooms($('boom').value);
+$('boom').oninput=update;$('boom').onchange=update;
 $('radius').oninput=update;
 $('weight').oninput=()=>{const w=num($('weight').value);if(w!=null&&num($('rNet').value)!=null){$('rNet').value=String(Math.round(Math.max(0,w-extrasT())*100)/100).replace('.',',');renderRigSum()}update()};
 addEventListener('resize',()=>{if(shown)draw(shown)});
@@ -2061,7 +2079,7 @@ function outrigger(){
   if(!c||!ch){k.innerHTML='';v.innerHTML='';n.textContent='Kies eerst een kraan.';return}
   const sp=c.spec||{};
   if(!sp.eigen||!sp.a||!sp.b){k.innerHTML='';v.innerHTML='<div class="verdict warn">Voor deze kraan ontbreken het eigen gewicht of de steunpootbasis. Vul die in bij Eigen kraan toevoegen.</div>';n.textContent='';return}
-  const L=num($('boom').value),j=ch.booms.indexOf(L),r=num($('radius').value);
+  const L=num($('boom').value),j=bIdx(ch,L),r=num($('radius').value);
   let Q=num($('weight').value),qNote='het gewicht aan de haak';
   if((Q==null||Q<=0)&&r&&j>=0){const res=lookup(ch,j,r);if(!res.err){Q=res.cap;qNote='de maximale last op deze vlucht, omdat er geen gewicht is ingevuld'}}
   if(Q==null||Q<=0||!r){k.innerHTML='';v.innerHTML='';n.textContent='Vul een vlucht en een gewicht in om de steunpootdruk te zien.';return}
@@ -2539,7 +2557,7 @@ const cell=x=>x?esc(x):'<span class="empty">–</span>';
 function renderPlan(){
   const doc=$('hpPlan');if(!doc)return;
   const c=crane(),ch=chart(),L=num($('boom').value),B=num($('ballast').value)||0,r=num($('radius').value),w=num($('weight').value);
-  const j=ch?ch.booms.indexOf(L):-1;
+  const j=ch?bIdx(ch,L):-1;
   let cap=null,used=null,err=null;
   if(ch&&j>=0&&r){const res=lookup(ch,j,r);if(res.err)err=res.err;else{cap=res.cap;used=res.used}}
   const pct=cap&&w?Math.round(w/cap*100):null;
@@ -2879,7 +2897,7 @@ function viewPhoto(id,i){
 function replan(l){
   if(!l)return;
   $('search').value='';fillCranes(l.craneId);$('crane').value=l.craneId;setHookDefault();fillConfig();
-  if([...$('ballast').options].some(o=>+o.value===+l.ballast)){$('ballast').value=String(l.ballast);fillBooms(String(l.boom))}
+  if(l.ballast!=null)$('ballast').value=String(l.ballast).replace('.',',');if(l.boom!=null)fillBooms(String(l.boom).replace('.',','));
   if(mode!=='load')setMode('load');
   $('radius').value=l.radius||'';
   if(l.hook!=null)$('rHook').value=String(l.hook).replace('.',',');
@@ -2900,7 +2918,7 @@ function replan(l){
 $('logSearch').oninput=renderLogList;
 function critHint(){
   const c=crane(),ch=chart(),L=num($('boom').value),r=num($('radius').value),w=num($('weight').value);let pct=null;
-  if(ch&&r&&w){const j=ch.booms.indexOf(L);if(j>=0){const res=lookup(ch,j,r);if(!res.err)pct=Math.round(w/res.cap*100)}}
+  if(ch&&r&&w){const j=bIdx(ch,L);if(j>=0){const res=lookup(ch,j,r);if(!res.err)pct=Math.round(w/res.cap*100)}}
   const o=lastOut,op=o&&o.allow?Math.round(o.p/o.allow*100):null;
   const why=[];if(pct!=null&&pct>=90)why.push(`de kraan ${pct}% benut wordt`);if(op!=null&&op>=85)why.push(`de ondergrond ${op}% belast wordt`);
   $('hpCritHint').textContent=why.length?`Advies: markeer als kritisch, omdat ${why.join(' en ')}.`:'';
@@ -2912,7 +2930,7 @@ $('hpSave').onclick=()=>{
   const c=crane(),w=num($('weight').value);
   if(!c||!w){msg.textContent=tr('Kies eerst een kraan en vul het gewicht aan de haak in.');return}
   if(!v('hpOp')){msg.textContent=tr('Vul minstens de naam van de machinist in.');$('hpOp').focus();return}
-  const ch=chart(),L=num($('boom').value),r=num($('radius').value),j=ch?ch.booms.indexOf(L):-1;let cap=null;if(j>=0&&r){const res=lookup(ch,j,r);if(!res.err)cap=res.cap}
+  const ch=chart(),L=num($('boom').value),r=num($('radius').value),j=ch?bIdx(ch,L):-1;let cap=null;if(j>=0&&r){const res=lookup(ch,j,r);if(!res.err)cap=res.cap}
   logs.push({id:'l'+Date.now(),date:v('hpDate')||new Date().toISOString().slice(0,10),project:v('hpProject'),loc:v('hpLoc'),craneId:c.id,craneLabel:label(c),boom:L,ballast:num($('ballast').value)||0,radius:r,weight:w,cap,pct:cap?Math.round(w/cap*100):null,critical:$('hpCrit').checked,desc:v('hpDesc'),team:{lead:v('hpLead'),op:v('hpOp'),rig:v('hpRig')},sigs:{...sigData},rig:rig.map(x=>({...x})),net:num($('rNet').value),hook:num($('rHook').value),photos:[]});
   openLifts.add(logs[logs.length-1].id);
   saveLog();fillTeamNames();
@@ -3411,7 +3429,7 @@ function dimLine(scene,a,b,text){
 function sceneCrane(T,scene){
   const c=crane(),ch=chart(),L=num($('boom').value)||30,r=Math.min(num($('radius').value)||L*.5,L*.97),w=num($('weight').value);
   const ballasts=c?Object.keys(c.charts).map(Number):[1];const bal=num($('ballast').value)||0;
-  let pct=null;if(ch&&r){const j=ch.booms.indexOf(L);if(j>=0){const res=lookup(ch,j,r);if(!res.err&&w)pct=Math.round(w/res.cap*100)}}
+  let pct=null;if(ch&&r){const j=bIdx(ch,L);if(j>=0){const res=lookup(ch,j,r);if(!res.err&&w)pct=Math.round(w/res.cap*100)}}
   const DS=Math.max(55,L*1.9,r*2.1),LS=DS/42;
   const g=new T.Mesh(new T.PlaneGeometry(400,400),mat(C3.ground));g.rotation.x=-Math.PI/2;g.receiveShadow=true;scene.add(g);
   const pivotX=1.2,pivotY=2.7+1.6;
