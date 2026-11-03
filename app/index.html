@@ -277,6 +277,7 @@ dialog h2{font-size:32px}
 #loginDlg .acc-tabs{display:flex;gap:8px;margin:14px 0 4px}#loginDlg .acc-tabs button{flex:1;padding:10px;border-radius:8px;border:1px solid var(--line);background:var(--field);color:var(--ink);font:600 15px "Barlow",sans-serif;cursor:pointer}
 #loginDlg .acc-tabs button[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
 #accMsg{margin:12px 0 0;font-weight:600}#accMsg:empty{display:none}#accMsg.err{color:var(--stop)}
+.pw-wrap{position:relative}.pw-wrap input{padding-right:52px!important}.pw-eye{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:44px;height:44px;margin:0!important;padding:0!important;border:0!important;background:none!important;color:var(--muted)!important;display:grid;place-items:center;cursor:pointer;border-radius:6px}.pw-eye:hover{color:var(--ink)!important}.pw-eye:focus-visible{outline:2px solid var(--signal)}.pw-eye .eye-shut{display:none}.pw-eye[aria-pressed="true"] .eye-shut{display:inline}.pw-eye[aria-pressed="true"] .eye-open{display:none}
 #loginDlg .linkbtn{background:none;border:0;padding:0;margin-top:10px;color:var(--ink);text-decoration:underline;cursor:pointer;font:500 14px "Barlow",sans-serif}
 #loginDlg details{margin-top:18px;border-top:1px solid var(--line);padding-top:12px}#loginDlg summary{cursor:pointer;font-weight:600;color:var(--muted)}
 #cloudBadge{display:inline-block;font-size:13px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--field);border:1px solid var(--line);margin-left:6px}
@@ -1243,7 +1244,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
     <form id="accForm" novalidate>
       <div id="accNameRow" hidden><label for="accName">Je naam</label><input id="accName" autocomplete="name" maxlength="120" placeholder="Voor- en achternaam"></div>
       <label for="accEmail">E-mailadres</label><input id="accEmail" type="email" autocomplete="email" required>
-      <div id="accPwRow"><label for="accPw">Wachtwoord</label><input id="accPw" type="password" autocomplete="current-password" minlength="8"></div>
+      <div id="accPwRow"><label for="accPw">Wachtwoord</label><div class="pw-wrap"><input id="accPw" type="password" autocomplete="current-password" minlength="8"><button type="button" class="pw-eye" data-for="accPw" aria-pressed="false" aria-label="Wachtwoord tonen" title="Wachtwoord tonen"><svg viewBox="0 0 24 24" aria-hidden="true" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="eye-open" d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle class="eye-open" cx="12" cy="12" r="3"/><path class="eye-shut" d="M3 3l18 18M10.6 5.1A9.7 9.7 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4.1M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7a9.6 9.6 0 0 0 5.4-1.6M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg></button></div></div>
       <p class="note" id="accPwHint" hidden>Minimaal 8 tekens.</p>
       <div class="actions"><button class="btn" type="submit" id="accSubmit">Inloggen</button><button class="btn secondary" type="button" id="loginCancel">Annuleren</button></div>
       <button type="button" class="linkbtn" id="accForgot">Wachtwoord vergeten?</button>
@@ -2769,6 +2770,7 @@ function accSetMode(m){accMode=m;
   $('accSubmit').textContent=up?'Account aanmaken':reset?'Wachtwoord opslaan':forgot?'Stuur herstellink':'Inloggen';
   $('accForgot').hidden=m!=='in';$('accDemo').hidden=reset;accSay('');
 }
+document.querySelectorAll('.pw-eye').forEach(b=>b.addEventListener('click',()=>{const i=document.getElementById(b.dataset.for),show=i.type==='password';i.type=show?'text':'password';b.setAttribute('aria-pressed',String(show));b.setAttribute('aria-label',show?'Wachtwoord verbergen':'Wachtwoord tonen');b.title=b.getAttribute('aria-label');i.focus()}));
 $('accTabIn').onclick=()=>accSetMode('in');
 $('accTabUp').onclick=()=>accSetMode('up');
 $('accForgot').onclick=()=>accSetMode('forgot');
