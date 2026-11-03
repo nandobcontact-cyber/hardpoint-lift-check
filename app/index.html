@@ -560,6 +560,19 @@ body:not(.ai) .tile.log{grid-column:span 2}
 .va-out ul{margin:0;padding-left:20px}
 .va-wait{display:flex;gap:14px;align-items:center;flex-wrap:wrap;font-weight:600}
 .va-dl{margin-top:10px}
+.kd{margin-top:16px}
+.sub4{margin:0 0 4px;font:700 20px "Barlow Condensed",sans-serif}
+.kd-list{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.kd-row{display:grid;grid-template-columns:minmax(150px,1.6fr) 1fr minmax(140px,1.4fr) 1fr 1fr auto;gap:8px;align-items:end;background:var(--field);border:1px solid var(--line);border-left:5px solid var(--line);border-radius:10px;padding:10px}
+.kd-row.stop{border-left-color:var(--stop)}.kd-row.warn{border-left-color:var(--signal)}.kd-row.ok{border-left-color:var(--ok)}
+.kd-row label{display:flex;flex-direction:column;font-size:12px;font-weight:600;color:var(--muted);gap:3px}
+.kd-row input,.kd-row select{width:100%;font:500 15px "Barlow",sans-serif;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:9px 10px;min-width:0}
+.kd-row .x{align-self:center}
+.kd-why{grid-column:1/-1;margin:2px 0 0;font-size:14px;line-height:1.45;display:flex;gap:8px;align-items:baseline}
+.kd-dot{width:10px;height:10px;border-radius:50%;flex:none;background:var(--ok)}.kd-dot.stop{background:var(--stop)}.kd-dot.warn{background:var(--signal)}
+.kd-ai{font-size:11px;font-weight:700;letter-spacing:.06em;background:var(--ink);color:var(--surface);border-radius:4px;padding:1px 5px;flex:none}
+@media (max-width:720px){.kd-row{grid-template-columns:1fr 1fr}.kd-row select[data-kf="soort"]{grid-column:1/-1}.kd-row .x{grid-column:2;justify-self:end}}
+
 .va-dl dd{text-align:left;font-weight:500}
 /* snel toevoegen */
 .qadd{border-top:6px solid var(--signal)}
@@ -3487,8 +3500,9 @@ function sceneShip(T,scene){
     hookAndLoad(scene,tip,Math.max(deckY+3,tip.y*.4),num($('weight').value)||20,false);
     ringAt(scene,r.liftX,-r.set,r.rDeck,0,C3.orange);
     dimLine(scene,new T.Vector3(r.liftX+2,.1,-r.set),new T.Vector3(r.liftX+2,.1,-r.set+r.rDeck),`${tr('Vlucht')} ${nf1.format(r.rDeck)} m`);
-    const l=label3d(tr('Walkraan op de kade'),{size:LS,bg:'rgba(255,255,255,.94)',fg:'#0B1F3A'});l.position.set(r.liftX,tip.y+LS*2,-r.set-4);scene.add(l);
+    const wc=crane(),l=label3d(`${tr('Walkraan')}${wc?' · '+label(wc):''}`,{size:LS,bg:'rgba(255,255,255,.94)',fg:'#0B1F3A'});l.position.set(r.liftX,tip.y+LS*2,-r.set-4);scene.add(l);
   }
+  try{kade3D(T,scene,r,LS)}catch(e){console.warn('kade3D',e)}
   return {target:new T.Vector3((sx+ex)/2,tgtY,zc*.3),dist,title:`${s.naam} · ${tr(boord?'Boordkraan':'Walkraan')}`};
 }
 async function open3D(kind){
@@ -3563,66 +3577,167 @@ function vaContext(kind){
   }
   return L.join('\n');
 }
+/* ---------- kade-analyse: video/foto's, AI-beoordeling, belemmeringen en vrije vlucht ---------- */
+const KADE_SOORT={
+  groen:{n:'Onverhard / groen',h:0,w:6,ground:true,col:0x3E8E41},
+  zwak:{n:'Putdeksel / kelder / zwakke plek',h:0,w:2,ground:true,col:0x6B5B3E},
+  mast:{n:'Lichtmast / paal',h:15,w:.6,col:0x8A949E},
+  gebouw:{n:'Gebouw / loods',h:10,w:15,col:0xB8B2A7},
+  lading:{n:'Container / opgeslagen lading',h:2.6,w:6,col:0x2F6FA8},
+  voertuig:{n:'Voertuig',h:3,w:5,col:0xE3E6EA},
+  walkraan:{n:'Walkraan / kraanrails',h:25,w:10,col:0x3A4A5C},
+  kabel:{n:'Bovenleiding / kabel',h:8,w:1,col:0x1B2027},
+  hek:{n:'Hek / afzetting',h:2,w:6,col:0xF2B705},
+  overig:{n:'Overig obstakel',h:2,w:2,col:0x7D8A96},
+};
+const KADE_RICHT={land:'landinwaarts',water:'richting kadekant',hoog:'richting hogere bolders',laag:'richting lagere bolders'};
+const kadeKey=k=>'hlc-kade-'+k;
+function kadeLoad(k){try{const a=JSON.parse(localStorage.getItem(kadeKey(k))||'[]');return Array.isArray(a)?a.filter(x=>x&&KADE_SOORT[x.soort]):[]}catch(e){return []}}
+function kadeSave(k,a){try{localStorage.setItem(kadeKey(k),JSON.stringify(a))}catch(e){}}
+let kadeAI={wal:null,boord:null};
+/* schatting van de achterzwenkradius (contragewicht) van een mobiele kraan, op basis van de klasse */
+const tailR=K=>K<=60?3.6:K<=120?4.4:K<=250?5.2:6.2;
+/* referentiepunt: walkraan = kraanpositie, boordkraan = afzetplek op de kade */
+function kadeRef(kind){
+  const r=berthCalc();if(!r||r.err)return null;
+  if(kind==='wal'){if(r.liftX==null)return null;const c=crane(),sp=(c&&c.spec)||{},K=c?klasse(c)||100:100,a=sp.a||8.6,b=sp.b||8.3;
+    return {r,x:r.liftX,z:-r.set,vlucht:r.rDeck,tail:tailR(K),foot:Math.hypot(a,b)/2,a,b,K,craneTxt:c?label(c):'mobiele kraan'}}
+  if(!r.c)return null;
+  return {r,x:r.tx,z:-r.qoff,vlucht:r.rB,reach:r.c.reach,over:r.c.over||0,craneTxt:`boordkraan ${r.ci+1} (${r.c.swl} t, ${r.c.reach} m)`};
+}
+function kadePos(ref,it){const d=Math.max(0,+it.afstand||0);let x=ref.x,z=ref.z;
+  if(it.richting==='land')z-=d;else if(it.richting==='water')z+=d;else if(it.richting==='hoog')x+=d;else x-=d;
+  return {x,z:Math.min(-.6,z)}}
+/* beoordeel elk item tegen achterzwenk, steunpoten, vlucht en afzetplek */
+function kadeCheck(kind,items){
+  const ref=kadeRef(kind);if(!ref)return null;
+  const res=items.map(it=>{const S=KADE_SOORT[it.soort],h=it.hoogte!=null&&it.hoogte!==''?+it.hoogte:S.h,w=+it.breedte||S.w,edge=Math.max(0,(+it.afstand||0)-w/2);
+    let lvl='ok',why='Vrij.';
+    if(kind==='wal'){
+      if(S.ground){if(edge<=ref.foot+1){lvl='stop';why=`Ligt binnen ${nf1.format(ref.foot+1)} m van de kraan: een steunpoot kan op of naast deze ondergrond komen. Rijplaten of draagkrachtonderzoek nodig, of verplaats de kraan.`}
+        else if(edge<=ref.foot+4){lvl='warn';why='Dicht bij de steunpoten. Controleer de ondergrond en de drukspreiding.'}}
+      else if(edge<=ref.tail+1&&h>=1){lvl='stop';why=`Binnen de achterzwenk (± ${nf1.format(ref.tail)} m): het contragewicht kan hier tegenaan zwenken.`}
+      else if(edge<=ref.vlucht){lvl=it.soort==='kabel'||h>=8?'stop':'warn';why=it.soort==='kabel'?'Bovenleiding of kabel binnen het werkgebied van giek en last. Niet hijsen zonder afspraken met de beheerder.':`Staat binnen de zwaaicirkel (vlucht ${nf1.format(ref.vlucht)} m). Houd giek en last vrij${h?`; hoogte ± ${nf1.format(h)} m`:''}.`}
+    }else{
+      if(edge<=3){lvl=S.ground?'warn':'stop';why=S.ground?'De last komt op of naast deze ondergrond. Controleer de draagkracht onder de last.':'Staat op de afzetplek. Maak de plek vrij of kies een andere plek.'}
+      else if(edge<=8&&!S.ground){lvl='warn';why='Binnen de werkruimte rond de afzetplek (aanslaan, afvoer).'}
+      else if(!S.ground&&h>=6&&it.richting==='water'){lvl='warn';why='Hoog obstakel richting kadekant: kan in het zwaaigebied van de boordkraan staan.'}
+    }
+    return {it,S,h,w,edge,lvl,why}});
+  const n=l=>res.filter(x=>x.lvl===l).length;
+  return {ref,res,stop:n('stop'),warn:n('warn')};
+}
+function kadeRender(host){
+  const kind=host.dataset.va,box=host.querySelector('[data-kade]');if(!box)return;
+  const items=kadeLoad(kind),chk=kadeCheck(kind,items);
+  const opt=(o,v)=>Object.entries(o).map(([k,x])=>`<option value="${k}"${k===v?' selected':''}>${esc(tr(typeof x==='string'?x:x.n))}</option>`).join('');
+  let sum='';
+  if(!chk)sum=`<div class="verdict warn">${tr(kind==='wal'?'Kies eerst een schip, kade, bolders en de plek op het dek. Dan kan de app de vlucht rondom controleren.':'Kies eerst een schip, kade, bolders en een boordkraan. Dan kan de app de afzetplek controleren.')}</div>`;
+  else{const free=!chk.stop&&!chk.warn,ref=chk.ref;
+    const basis=kind==='wal'?`Gecontroleerd: achterzwenk ± ${nf1.format(ref.tail)} m (schatting), steunpoten ± ${nf1.format(ref.a)} × ${nf1.format(ref.b)} m, vlucht ${nf1.format(ref.vlucht)} m rondom de kraan.`:`Gecontroleerd: afzetplek en werkruimte rond de last, zwaaigebied van ${esc(ref.craneTxt)}.`;
+    sum=!items.length?`<div class="verdict warn"><b>Nog niet beoordeeld</b> · film de kade of voeg de belemmeringen zelf toe. Zonder gegevens kan de app niet zeggen of ${kind==='wal'?'de vlucht rondom':'de afzetplek'} vrij is.<p class="note" style="margin:6px 0 0">${basis}</p></div>`:`<div class="verdict ${chk.stop?'stop':chk.warn?'warn':'ok'}"><b>${kind==='wal'?(free?'Vlucht rondom vrij':'Vlucht rondom niet vrij'):(free?'Afzetplek vrij':'Afzetplek niet vrij')}</b>${` · ${chk.stop} ${chk.stop===1?'blokkade':'blokkades'}, ${chk.warn} ${chk.warn===1?'aandachtspunt':'aandachtspunten'}`}<p class="note" style="margin:6px 0 0">${basis}</p></div>`}
+  const rows=items.map((it,i)=>{const c=chk&&chk.res[i];return `<div class="kd-row ${c?c.lvl:''}">
+    <select data-kf="soort" data-i="${i}" aria-label="Soort">${opt(KADE_SOORT,it.soort)}</select>
+    <label>Afstand<input data-kf="afstand" data-i="${i}" type="text" inputmode="decimal" value="${esc(it.afstand??'')}" placeholder="m"></label>
+    <select data-kf="richting" data-i="${i}" aria-label="Richting">${opt(KADE_RICHT,it.richting)}</select>
+    <label>Hoogte<input data-kf="hoogte" data-i="${i}" type="text" inputmode="decimal" value="${esc(it.hoogte??'')}" placeholder="${nf1.format(KADE_SOORT[it.soort].h)}"></label>
+    <label>Breedte<input data-kf="breedte" data-i="${i}" type="text" inputmode="decimal" value="${esc(it.breedte??'')}" placeholder="${nf1.format(KADE_SOORT[it.soort].w)}"></label>
+    <button type="button" class="x" data-kdel="${i}" aria-label="Verwijderen">×</button>
+    ${c?`<p class="kd-why"><span class="kd-dot ${c.lvl}"></span>${it.bron==='ai'?'<span class="kd-ai">AI</span>':''}${esc(it.notitie?it.notitie+' — ':'')}${esc(c.why)}</p>`:''}</div>`}).join('');
+  box.innerHTML=`<h4 class="sub4">Belemmeringen op de kade</h4>
+    <p class="note">${kind==='wal'?'Afstand gemeten vanaf het midden van de walkraan.':'Afstand gemeten vanaf de afzetplek van de last.'} Dit vult de AI in na de video-analyse; je kunt alles aanpassen of zelf toevoegen.</p>
+    ${sum}<div class="kd-list">${rows}</div>
+    <div class="actions" style="align-items:center"><button class="btn sm secondary" type="button" data-kadd style="margin-top:0">Belemmering toevoegen</button><button class="btn sm" type="button" data-k3d style="margin-top:0">Bekijk de kade in 3D</button>${items.length?'<button class="x" type="button" data-kclear>Alles wissen</button>':''}</div>`;
+  const upd=(i,f,v)=>{const a=kadeLoad(kind);if(!a[i])return;a[i][f]=f==='soort'||f==='richting'?v:(v.trim()===''?'':num(v));if(f!=='richting'&&f!=='soort')a[i].bron=a[i].bron==='ai'?'ai':'zelf';kadeSave(kind,a)};
+  box.querySelectorAll('[data-kf]').forEach(el=>{el.addEventListener('change',()=>{upd(+el.dataset.i,el.dataset.kf,el.value);kadeRender(host)})});
+  box.querySelectorAll('[data-kdel]').forEach(b=>b.onclick=()=>{const a=kadeLoad(kind);a.splice(+b.dataset.kdel,1);kadeSave(kind,a);kadeRender(host)});
+  box.querySelector('[data-kadd]').onclick=()=>{const a=kadeLoad(kind);a.push({soort:'overig',afstand:10,richting:'land',hoogte:'',breedte:'',bron:'zelf'});kadeSave(kind,a);kadeRender(host)};
+  const cl=box.querySelector('[data-kclear]');if(cl)cl.onclick=()=>{if(!confirm(tr('Alle belemmeringen voor deze kade wissen?')))return;kadeSave(kind,[]);kadeAI[kind]=null;kadeRender(host)};
+  box.querySelector('[data-k3d]').onclick=()=>{if(!chk){box.querySelector('.verdict')?.scrollIntoView({block:'center'});return}open3D('ship')};
+}
+function kadeRenderAll(){document.querySelectorAll('[data-va]').forEach(kadeRender)}
+/* 3D: belemmeringen, onverharde zones, achterzwenk en vrije vlucht in de havenscène */
+function kade3D(T,scene,r,LS){
+  const kind=r.hm==='boord'&&r.c?'boord':'wal',items=kadeLoad(kind),chk=kadeCheck(kind,items);if(!chk)return;
+  const ref=chk.ref,COL={stop:C3.red,warn:0xF2B705,ok:null};
+  if(kind==='wal'){ringAt(scene,ref.x,ref.z,ref.tail,.06,chk.res.some(x=>x.lvl==='stop'&&!x.S.ground)?C3.red:C3.navy);
+    const l=label3d(`${tr('Achterzwenk')} ± ${nf1.format(ref.tail)} m`,{size:LS*.7});l.position.set(ref.x-ref.tail,LS*1.2,ref.z-1);scene.add(l)}
+  else{const zone=new T.Mesh(new T.CircleGeometry(3,40),new T.MeshBasicMaterial({color:chk.stop?C3.red:C3.green,transparent:true,opacity:.35}));zone.rotation.x=-Math.PI/2;zone.position.set(ref.x,.05,ref.z);scene.add(zone)}
+  chk.res.forEach(({it,S,h,w,lvl})=>{const p=kadePos(ref,it),hl=COL[lvl];
+    if(S.ground){const m=new T.Mesh(new T.PlaneGeometry(w,w),mat(S.col,{roughness:1}));m.rotation.x=-Math.PI/2;m.position.set(p.x,.04,p.z);m.receiveShadow=true;scene.add(m);
+      if(hl){const e=new T.Mesh(new T.RingGeometry(w*.5,w*.5+.25,4,1,Math.PI/4),new T.MeshBasicMaterial({color:hl,side:T.DoubleSide}));e.rotation.x=-Math.PI/2;e.scale.set(1.414,1.414,1);e.position.set(p.x,.06,p.z);scene.add(e)}}
+    else if(it.soort==='mast'){const m=cyl(.18,.25,h,S.col,10);m.position.set(p.x,h/2,p.z);scene.add(m);scene.add(box(2,.25,.4,0xe9edf1,p.x,h,p.z))}
+    else if(it.soort==='kabel'){const m=cyl(.05,.05,Math.max(20,w*10),0x1B2027,6);m.rotation.z=Math.PI/2;m.position.set(p.x,h,p.z);scene.add(m);[-1,1].forEach(s=>{const pl=cyl(.15,.2,h,0x6B5B3E,8);pl.position.set(p.x+s*Math.max(10,w*5),h/2,p.z);scene.add(pl)})}
+    else scene.add(box(w,Math.max(.3,h),Math.max(1,Math.min(w,it.soort==='gebouw'?w*.7:2.5)),S.col,p.x,Math.max(.3,h)/2,p.z));
+    if(hl&&!S.ground){const ring=new T.Mesh(new T.RingGeometry(Math.max(.8,w*.55),Math.max(.8,w*.55)+.3,48),new T.MeshBasicMaterial({color:hl,side:T.DoubleSide}));ring.rotation.x=-Math.PI/2;ring.position.set(p.x,.07,p.z);scene.add(ring)}
+    const lb=label3d(tr(S.n.split(' / ')[0]),{size:LS*.62,bg:lvl==='stop'?'rgba(192,54,44,.95)':lvl==='warn'?'rgba(242,183,5,.95)':'rgba(11,31,58,.85)',fg:lvl==='warn'?'#0B1F3A':'#fff'});
+    lb.position.set(p.x,Math.max(h,1)+LS*.9,p.z);scene.add(lb)});
+}
 (async()=>{
   const hosts=[...document.querySelectorAll('[data-va]')];
   hosts.forEach(h=>{const k=h.dataset.va;h.innerHTML=`<h3 class="sub3">Kade-analyse met video</h3>
-    <p class="note">${k==='wal'?'Film de kade waar de walkraan moet komen. We halen een paar beelden uit het filmpje en laten beoordelen of de kraan daar kan staan en of de vlucht klopt.':'Film de kade rond de los- of laadplek. We halen een paar beelden uit het filmpje en laten beoordelen of de boordkraan de plek kan halen en of die vrij is.'}</p>
+    <p class="note">${k==='wal'?'Film de kade rondom de plek waar de walkraan moet komen. Draai rustig een rondje, zodat ook onverharde stukken, groen en obstakels in de zwaaicirkel in beeld komen.':'Film de kade rond de los- of laadplek, met de omgeving van de afzetplek en het zwaaigebied van de boordkraan.'}</p>
     <div class="va-row"><label class="btn sm va-pick">Video of foto’s kiezen<input type="file" accept="video/*,image/*" multiple hidden data-vain></label><span class="note" data-vainfo></span></div>
-    <div class="va-thumbs" data-vathumbs></div><div class="va-out" data-vaout aria-live="polite"></div>`});
+    <div class="va-thumbs" data-vathumbs></div><div class="va-out" data-vaout aria-live="polite"></div><div class="kd" data-kade></div>`;kadeRender(h)});
+  /* bij elke wijziging aan schip, kade of kraan de controle opnieuw doen */
+  setTimeout(kadeRenderAll,0);addEventListener('load',kadeRenderAll);addEventListener('hashchange',()=>{if(location.hash==='#/schepen')setTimeout(kadeRenderAll,50)});
+  let kt=0;['input','change','click'].forEach(ev=>document.addEventListener(ev,e=>{const t=e.target;if(!t.closest||t.closest('[data-kade]')||!t.closest('[data-screen="schepen"]'))return;clearTimeout(kt);kt=setTimeout(kadeRenderAll,300)}));
   const ai=await getAI();
-  let sample=ai&&ai.s,lim=ai&&ai.lim;
-  if(!sample||!lim||!lim.images){hosts.forEach(h=>{h.querySelector('.va-row').innerHTML=`<p class="note">${tr('De video-analyse is op deze plek nog niet actief.')}</p>`});return}
-  const maxN=Math.max(1,Math.min(6,lim.images.maxCount||4));
+  const sample=ai&&ai.s,lim=ai&&ai.lim,aiOn=!!(sample&&lim&&lim.images);
+  const maxN=aiOn?Math.max(1,Math.min(6,lim.images.maxCount||4)):6;
   hosts.forEach(h=>{
     const kind=h.dataset.va,inp=h.querySelector('[data-vain]'),th=h.querySelector('[data-vathumbs]'),out=h.querySelector('[data-vaout]'),info=h.querySelector('[data-vainfo]');
+    if(!aiOn)info.textContent=tr('De automatische beoordeling werkt op hardpointsafety.com. Hier zie je de beelden en vul je de belemmeringen zelf in.');
     let ctl=null,urls=[];
     inp.onchange=async()=>{
       const files=[...inp.files];inp.value='';if(!files.length)return;
       ctl?.abort();ctl=new AbortController();urls.forEach(u=>URL.revokeObjectURL(u));urls=[];th.innerHTML='';out.innerHTML='';
-      const ctx=vaContext(kind);
-      if(!ctx){out.innerHTML=`<div class="verdict warn">${'Kies eerst een schip, kade en bolders.'}</div>`;return}
-      let frames=[];
-      info.textContent='Beelden uit de video halen…';
-      try{
-        for(const f of files){
-          if(f.type.startsWith('video/'))frames.push(...await framesFromVideo(f,maxN));
-          else frames.push(f);
-          if(frames.length>=maxN)break;
-        }
-      }catch(e){info.textContent='';out.innerHTML=`<div class="verdict warn">${'Deze video kan de browser niet lezen. Probeer een ander filmpje (bijvoorbeeld MP4) of kies een paar foto’s.'}</div>`;return}
-      frames=frames.slice(0,maxN);
+      let frames=[];info.textContent=tr('Beelden uit de video halen…');
+      try{frames=await mediaToImages(files,maxN)}catch(e){info.textContent='';out.innerHTML=`<div class="verdict warn">${tr('Deze video kan de browser niet lezen. Probeer een ander filmpje (bijvoorbeeld MP4) of kies een paar foto’s.')}</div>`;return}
       if(!frames.length){info.textContent='';return}
       info.textContent=`${frames.length} ${frames.length===1?'beeld':'beelden'}`;
       th.innerHTML=frames.map(b=>{const u=URL.createObjectURL(b);urls.push(u);return `<img src="${u}" alt="">`}).join('');
-      out.innerHTML=`<div class="va-wait"><span>${'Beelden beoordelen…'}</span><span class="note">${'Dit duurt meestal een halve minuut tot een minuut.'}</span><button class="btn sm secondary" type="button" data-vastop style="margin-top:0">Stoppen</button></div>`;
+      if(!aiOn){out.innerHTML=`<div class="verdict warn">${tr('Automatisch beoordelen is op deze plek niet actief. Bekijk de beelden en voer hieronder in wat je ziet: onverharde stukken, groen, lichtmasten, lading, kabels en andere obstakels, met de afstand tot de kraan. De app controleert dan zelf of de vlucht rondom vrij is.')}</div>`;h.querySelector('[data-kade]').scrollIntoView({block:'nearest'});return}
+      const ref=kadeRef(kind),ctx=vaContext(kind);
+      if(!ref||!ctx){out.innerHTML=`<div class="verdict warn">${tr('Kies eerst een schip, kade en bolders.')}</div>`;return}
+      out.innerHTML=`<div class="va-wait"><span>${tr('Beelden beoordelen…')}</span><span class="note">${tr('Dit duurt meestal een halve minuut tot een minuut.')}</span><button class="btn sm secondary" type="button" data-vastop style="margin-top:0">${tr('Stoppen')}</button></div>`;
       out.querySelector('[data-vastop]').onclick=()=>ctl.abort();
       const en=LANG!=='nl';
+      const extra=kind==='wal'
+        ?`Achterzwenkradius van de kraan (contragewicht) ongeveer ${nf1.format(ref.tail)} m, steunpootbasis ongeveer ${nf1.format(ref.a)} × ${nf1.format(ref.b)} m, vlucht ${nf1.format(ref.vlucht)} m. Afstanden meet je vanaf het midden van de kraanpositie.`
+        :`Afstanden meet je vanaf de afzetplek van de last op de kade. Zwaaigebied van de boordkraan op de kade: tot ${nf1.format(ref.over)} m van de kadekant.`;
       const task=kind==='wal'
-        ?`Een mobiele kraan (walkraan) op de kade moet een last op het dek van het schip zetten. Beoordeel: is er ruimte voor de kraan met uitgeschoven steunpoten en schotten, welke obstakels zijn er (lichtmasten, walkranen, rails, containers, kabels, bolders, bovenleiding, gebouwen, putdeksels), hoe ziet de ondergrond eruit (asfalt, klinkers, beton, randzone van de kademuur), is de plek bereikbaar, en is de geplande positie met de berekende vlucht realistisch? Stel zo nodig een betere positie voor (bijvoorbeeld 'schuif 5 m richting bolder 16') en zeg wat dat met de vlucht doet.`
-        :`De boordkraan van het schip moet een last op de kade laden of lossen. Beoordeel: is de los- of laadplek vrij en bereikbaar voor de boordkraan, zijn er obstakels in de zwaaicirkel of op de kade (lichtmasten, walkranen, gebouwen, opgeslagen lading, voertuigen), is er ruimte voor aanslaan en afvoer, hoe ziet de ondergrond voor de last eruit (randzone van de kademuur), en ligt het schip zo dat de plek gehaald wordt? Stel zo nodig een betere plek of ligplaats voor (bijvoorbeeld 'schip 10 m richting bolder 18').`;
+        ?`Een mobiele kraan (walkraan) op de kade moet een last op het dek van het schip zetten. Beoordeel of de kade geschikt is: ruimte voor de kraan met uitgeschoven steunpoten, de ondergrond (asfalt, klinkers, beton, ONVERHARDE grond, gras/groenstroken, zand, putdeksels, kelders, de randzone van de kademuur), en of de VLUCHT RONDOM VRIJ is: kan de kraan 360° zwenken zonder dat het contragewicht of de giek ergens tegenaan komt (lichtmasten, gebouwen, walkranen en rails, containers en opgeslagen lading, voertuigen, hekken, bovenleiding en kabels)?`
+        :`De boordkraan van het schip moet een last op de kade laden of lossen. Beoordeel of de afzetplek geschikt en vrij is: obstakels op en rond de plek, ONVERHARDE grond of groen onder de last, ruimte voor aanslaan en afvoer, en obstakels in het zwaaigebied van de boordkraan boven de kade (lichtmasten, walkranen, gebouwen, kabels).`;
       const prompt=`Je bent een ervaren hijsadviseur in de haven en geeft ADVIES, geen goedkeuring. De beelden komen uit een video of foto's van de kade, in volgorde.
 ${task}
 Gegevens uit de app:
 ${ctx}
-Wees eerlijk als je afstanden of details niet goed kunt zien op de beelden, en zeg dan wat iemand op locatie moet nameten.
-Antwoord alleen met één JSON-object, ${en?'met alle tekstvelden in het '+LNAME()+' (keep the JSON keys and the oordeel/zekerheid values in Dutch exactly as shown)':'in het Nederlands'}, kort en praktisch:
-{"oordeel":"geschikt"|"twijfel"|"niet geschikt","samenvatting":"1 of 2 zinnen","ruimte":"wat je ziet over de ruimte","obstakels":["..."],"ondergrond":"...","vlucht":"klopt de berekende vlucht met wat je ziet, of wat is je advies","advies":"concreet advies voor de opstelling of de plek","aandachtspunten":["..."],"zekerheid":"hoog"|"middel"|"laag"}`;
+${extra}
+Zet elke belemmering die je ziet in "items", met een geschatte afstand in meters en de richting gezien vanaf ${kind==='wal'?'de kraan':'de afzetplek'}. Richting is één van: "land" (landinwaarts, van het water af), "water" (richting kadekant), "hoog" (langs de kade richting hogere boldernummers), "laag" (richting lagere boldernummers). Kun je de richting langs de kade niet bepalen, kies dan "land". Soort is één van: "groen" (onverhard, gras, zand), "zwak" (putdeksel, kelder, zwakke plek), "mast" (lichtmast of paal), "gebouw", "lading" (container of opgeslagen lading), "voertuig", "walkraan" (walkraan of kraanrails), "kabel" (bovenleiding of kabel), "hek", "overig".
+Wees eerlijk als je afstanden of details niet goed kunt zien, en zeg dan wat iemand op locatie moet nameten.
+Antwoord alleen met één JSON-object, ${en?'met alle tekstvelden in het '+LNAME()+' (keep the JSON keys and the oordeel/zekerheid/vrij/soort/richting values in Dutch exactly as shown)':'in het Nederlands'}, kort en praktisch:
+{"oordeel":"geschikt"|"twijfel"|"niet geschikt","samenvatting":"1 of 2 zinnen","ondergrond":"...","onverhard":"wat je ziet aan onverharde stukken of groen, en waar","vlucht_rondom_vrij":"ja"|"nee"|"onbekend","vlucht":"toelichting op de vrije vlucht rondom","advies":"concreet advies voor de opstelling of de plek","items":[{"soort":"...","afstand_m":0,"richting":"land","hoogte_m":0,"breedte_m":0,"notitie":"kort wat het is"}],"aandachtspunten":["..."],"zekerheid":"hoog"|"middel"|"laag"}`;
       try{
         const a=await sample.json(prompt,{images:frames,signal:ctl.signal});
         const o=['geschikt','twijfel','niet geschikt'].includes(a&&a.oordeel)?a.oordeel:'twijfel';
         const z=['hoog','middel','laag'].includes(a&&a.zekerheid)?a.zekerheid:'laag';
+        const vr=['ja','nee','onbekend'].includes(a&&a.vlucht_rondom_vrij)?a.vlucht_rondom_vrij:'onbekend';
         const cls={geschikt:'ok',twijfel:'warn','niet geschikt':'stop'}[o];
         const lab={geschikt:'Geschikt',twijfel:'Twijfel','niet geschikt':'Niet geschikt'}[o];
         const list=x=>Array.isArray(x)&&x.length?`<ul>${x.map(i=>`<li>${esc(i)}</li>`).join('')}</ul>`:'';
-        out.innerHTML=`<div class="verdict ${cls}"><b>${lab}</b><span class="conf ${z}">zekerheid ${z}</span><p style="margin:6px 0 0;font-weight:500">${esc(a.samenvatting||'')}</p></div>
-          <dl class="dl va-dl">${[['Ruimte',a.ruimte],['Ondergrond',a.ondergrond],['Vlucht',a.vlucht],['Advies',a.advies]].filter(x=>x[1]).map(([k,v])=>`<dt>${k}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
-          ${Array.isArray(a.obstakels)&&a.obstakels.length?`<p class="sec">Obstakels</p>${list(a.obstakels)}`:''}
-          ${Array.isArray(a.aandachtspunten)&&a.aandachtspunten.length?`<p class="sec">Let op</p>${list(a.aandachtspunten)}`:''}
-          <p class="advice-note">Dit is een advies op basis van beelden. Meet op locatie na en volg het hijsplan.</p>`;
+        /* belemmeringen uit de AI overnemen (handmatige blijven staan) */
+        const ai=(Array.isArray(a.items)?a.items:[]).filter(x=>x&&KADE_SOORT[x.soort]).slice(0,25).map(x=>({soort:x.soort,afstand:Math.max(0,Math.round((+x.afstand_m||0)*10)/10),richting:KADE_RICHT[x.richting]?x.richting:'land',hoogte:x.hoogte_m>0?Math.round(x.hoogte_m*10)/10:'',breedte:x.breedte_m>0?Math.round(x.breedte_m*10)/10:'',notitie:String(x.notitie||'').slice(0,120),bron:'ai'}));
+        kadeSave(kind,kadeLoad(kind).filter(x=>x.bron!=='ai').concat(ai));
+        out.innerHTML=`<div class="verdict ${cls}"><b>${tr(lab)}</b><span class="conf ${z}">${tr('zekerheid')} ${tr(z)}</span><p style="margin:6px 0 0;font-weight:500">${esc(a.samenvatting||'')}</p></div>
+          <dl class="dl va-dl">${[['Ondergrond',a.ondergrond],['Onverhard en groen',a.onverhard],[`Vlucht rondom vrij: ${vr}`,a.vlucht],['Advies',a.advies]].filter(x=>x[1]).map(([k,v])=>`<dt>${tr(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
+          ${Array.isArray(a.aandachtspunten)&&a.aandachtspunten.length?`<p class="sec">${tr('Let op')}</p>${list(a.aandachtspunten)}`:''}
+          <p class="advice-note">${tr('Dit is een advies op basis van beelden. Afstanden zijn geschat: meet op locatie na en volg het hijsplan.')}</p>`;
+        kadeRender(h);
       }catch(e){
         if(e&&e.code==='cancelled'){out.innerHTML='';return}
-        if(e&&['not_granted','sampling_disabled','images_unavailable','not_declared','capability_disabled','capability_removed'].includes(e.code)){out.innerHTML=`<p class="note">De video-analyse is hier niet beschikbaar.</p>`;return}
-        out.innerHTML=`<div class="verdict warn">${e&&e.code==='rate_limited'?'Even te veel verzoeken. Probeer het over een paar minuten opnieuw.':'Analyseren is niet gelukt. Probeer het opnieuw met een rustiger filmpje of een paar foto’s.'}</div>`;
+        if(e&&['not_granted','sampling_disabled','images_unavailable','not_declared','capability_disabled','capability_removed'].includes(e.code)){out.innerHTML=`<p class="note">${tr('De video-analyse is hier niet beschikbaar. Vul de belemmeringen hieronder zelf in.')}</p>`;return}
+        out.innerHTML=`<div class="verdict warn">${e&&e.code==='rate_limited'?tr('Even te veel verzoeken. Probeer het over een paar minuten opnieuw.'):tr('Analyseren is niet gelukt. Probeer het opnieuw met een rustiger filmpje of een paar foto’s, of vul de belemmeringen hieronder zelf in.')}</div>`;
       }
     };
   });
