@@ -1048,8 +1048,8 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
             <div class="stage hk-stage" id="hkStage">
               <svg id="hkSvg" viewBox="0 0 800 500" role="img" aria-label="Last aangeslagen met band of strop, met invoervakken voor gewicht, werklast en hoek"></svg>
               <div class="tags">
-                <div class="tag load" id="hkTW"><label for="hkW">Gewicht last</label><div class="in"><input id="hkW" type="number" inputmode="decimal" min="0" step="0.1" placeholder="–"><span class="u">t</span></div></div>
-                <div class="tag" id="hkTS"><label for="hkS">Werklast band</label><div class="in"><input id="hkS" type="number" inputmode="decimal" min="0" step="0.5" value="2"><span class="u">t</span></div></div>
+                <div class="tag load" id="hkTW"><label for="hkW">Gewicht last</label><div class="in"><input id="hkW" type="text" inputmode="decimal" autocomplete="off" placeholder="–"><span class="u">t</span></div></div>
+                <div class="tag" id="hkTS"><label for="hkS">Werklast band</label><div class="in"><input id="hkS" type="text" inputmode="decimal" autocomplete="off" value="2"><span class="u">t</span></div></div>
                 <div class="tag" id="hkTA"><label for="hkA">Hoek met de verticaal</label><div class="in"><select id="hkA"><option value="0">0° evenwijdig</option><option value="45">tot 45°</option><option value="60">45° tot 60°</option></select></div></div>
               </div>
             </div>
@@ -3698,7 +3698,7 @@ $('rNet').addEventListener('input',()=>{if(!$('vW').value)renderAdvice()});
 const HK_F={recht:{1:{0:1},2:{0:2,45:1.4,60:1.0}},snoer:{1:{0:.8},2:{0:1.6,45:1.12,60:.8}},u:{1:{0:2,45:1.4,60:1.0},2:{0:4,45:2.8,60:2.0}}};
 const HK_NAME={recht:['Recht','Straight'],snoer:['Snoerend','Choke'],u:['U-bocht','Basket']};
 let hk={h:'snoer',n:1,a:0};try{Object.assign(hk,JSON.parse(localStorage.getItem('hlc-hijskaart')||'{}'))}catch(e){}
-let lastHk=null;
+let lastHk=null,hkAuto=true;
 const T2=(nl,en)=>LANG==='nl'?nl:X(en);
 function hkWhat(h,n,a){const hn=LANG==='nl'?HK_NAME[h][0]:X(HK_NAME[h][1]),lc=LANG==='de'?hn:hn.toLowerCase();return `${n===2?T2('2 stroppen','2 slings'):T2('1 strop','1 sling')}, ${lc}${a===0?'':T2(a===45?', tot 45°':', 45° tot 60°',a===45?', up to 45°':', 45° to 60°')}`}
 const hkFac=(h,n,a)=>HK_F[h]?.[n]?.[a];
@@ -3766,6 +3766,14 @@ function renderHk(){
   document.querySelectorAll('#hkHitch button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.h===hk.h)));
   document.querySelectorAll('#hkN button').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.n===hk.n)));
   const sel=$('hkA');[...sel.options].forEach(o=>o.disabled=!hkFac(hk.h,hk.n,+o.value));sel.value=String(hk.a);
+  /* automatisch de juiste band kiezen: kleinste standaard rondstrop waarvan werklast × factor ≥ gewicht */
+  let autoTxt='';
+  {const W0=num($('hkW').value),M0=hkFac(hk.h,hk.n,hk.a);
+   if(hkAuto&&W0>0&&M0){const need=W0/M0,r=RS.find(x=>x>=need-1e-9);
+     if(r){$('hkS').value=String(r);const col=RS_COL[r]||(r>=10?T2('oranje','orange'):'');
+       autoTxt=T2(`Automatisch gekozen: <b>rondstrop ${r} t${col?` (${col})`:''}</b>${hk.n===2?' per strop':''}. Je kunt de werklast ook zelf aanpassen.`,`Picked automatically: <b>${r} t round sling${col?` (${col})`:''}</b>${hk.n===2?' per sling':''}. You can also change the working load yourself.`)}
+     else{$('hkS').value=String(Math.ceil(need*10)/10).replace('.',',');autoTxt=T2(`Deze last is zwaarder dan de grootste standaard rondstrop (50 t). Nodig per strop: <b>${nf1.format(Math.ceil(need*10)/10)} t</b>. Overleg over een andere aanslagmethode.`,`This load exceeds the largest standard round sling (50 t). Needed per sling: <b>${nf1.format(Math.ceil(need*10)/10)} t</b>. Consider another rigging method.`)}}
+   else if(!hkAuto)autoTxt=T2('Werklast zelf ingevuld.','Working load entered manually.')+` <button type="button" class="linkbtn" id="hkAutoBtn">${T2('Weer automatisch kiezen','Pick automatically again')}</button>`;}
   const W=num($('hkW').value),S=num($('hkS').value),M=hkFac(hk.h,hk.n,hk.a);
   const cap=S>0?Math.round(S*M*100)/100:null,bad=W>0&&cap!=null&&cap<W-1e-9;
   lastHk=S>0?{h:hk.h,n:hk.n,a:hk.a,M,S,W,cap,bad}:null;
@@ -3783,7 +3791,7 @@ function renderHk(){
       const altTxt=al?' '+T2('Of sla anders aan:','Or rig differently:')+' '+hkWhat(al.h,al.n,al.a)+` (× ${fM(al.m)}).`:'';
       msg=what+(LANG==='fr'?' : ':': ')+T2(`deze band mag nog maar ${nf1.format(cap)} t (${calc}). De last is ${nf1.format(W)} t, dus <b>dit kan niet</b>. Neem per strop minstens ${nf1.format(Math.ceil(need*100)/100)} t${r?`, bijvoorbeeld een rondstrop van ${r} t`:''}.`,`this sling may only carry ${nf1.format(cap)} t (${calc}). The load is ${nf1.format(W)} t, so <b>this is not OK</b>. Use at least ${nf1.format(Math.ceil(need*100)/100)} t per sling${r?`, for example a ${r} t round sling`:''}.`)+altTxt}
   }
-  $('hkOut').innerHTML=`<div class="hk-res${bad?' bad':''}"><div><div class="lbl">${T2('Mag hijsen','May lift')}</div><div class="big">${cap!=null?nf1.format(cap)+' t':'–'}</div></div><p>${msg}</p>${cap!=null?shopBtn(`rondstrop-${tS(bad?(RS.find(x=>x>=W/M-1e-9)||S):S)}t`,T2('Bestel deze band','Order this sling')):''}</div>`;
+  $('hkOut').innerHTML=`<div class="hk-res${bad?' bad':''}"><div><div class="lbl">${T2('Mag hijsen','May lift')}</div><div class="big">${cap!=null?nf1.format(cap)+' t':'–'}</div></div><p>${msg}${autoTxt?`<br><span class="note">${autoTxt}</span>`:''}</p>${cap!=null?shopBtn(`rondstrop-${tS(bad?(RS.find(x=>x>=W/M-1e-9)||S):S)}t`,T2('Bestel deze band','Order this sling')):''}</div>`;
   /* tabel */
   const cols=[[1,0],[1,45],[1,60],[2,0],[2,45],[2,60]];
   const hd=c=>`${c[0]===1?T2('1 strop','1 sling'):T2('2 stroppen','2 slings')}<br>${c[1]===0?T2('recht / evenwijdig','vertical'):c[1]===45?'0°–45°':'45°–60°'}`;
@@ -3797,7 +3805,8 @@ $('hkHitch').addEventListener('click',e=>{const b=e.target.closest('[data-h]');i
 $('hkN').addEventListener('click',e=>{const b=e.target.closest('[data-n]');if(b){hk.n=+b.dataset.n;if(hk.n===2&&hk.a===0)hk.a=45;renderHk()}});
 $('hkA').addEventListener('change',()=>{hk.a=+$('hkA').value;renderHk()});
 $('hkTable').addEventListener('click',e=>{const b=e.target.closest('[data-hk]');if(!b)return;const [h,n,a]=b.dataset.hk.split(',');hk={h,n:+n,a:+a};renderHk()});
-['hkW','hkS'].forEach(id=>$(id).addEventListener('input',renderHk));matchMedia('(max-width:720px)').addEventListener('change',hkDraw);
+$('hkW').addEventListener('input',renderHk);$('hkS').addEventListener('input',()=>{hkAuto=false;renderHk()});
+$('hkOut').addEventListener('click',e=>{if(e.target.id==='hkAutoBtn'){hkAuto=true;renderHk()}});matchMedia('(max-width:720px)').addEventListener('change',hkDraw);
 $('vW').addEventListener('input',()=>{if(!$('hkW').value&&num($('vW').value)>0){$('hkW').placeholder=String(num($('vW').value)).replace('.',',')}});
 renderHk();
 function hkPlanRow(){if(!lastHk)return '';const L=lastHk;return `<table><tr><th>Aanslaan</th><td>${hkWhat(L.h,L.n,L.a)}: ${nf1.format(L.S)} t × ${fM(L.M)} = <b>${nf1.format(L.cap)} t</b>${L.W>0?(L.bad?` <span style="color:#C0362C">— ${T2(`last ${nf1.format(L.W)} t, te zwaar`,`load ${nf1.format(L.W)} t, too heavy`)}</span>`:` — ${T2(`last ${nf1.format(L.W)} t, akkoord`,`load ${nf1.format(L.W)} t, OK`)}`):''}</td></tr></table>`}
